@@ -17,7 +17,7 @@ client = discord.Client(intents=intents)
 # ฟังก์ชันเพื่ออ่านข้อมูลจากไฟล์ JSON
 def load_shop_data():
     folder_path = "topup"
-    data_file = os.path.join(folder_path, "shop2.json")
+    data_file = os.path.join(folder_path, "shop2.json") # ถ้าไม่ได้ใช้ shop.json
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     
