@@ -15,17 +15,20 @@ class KeyLock:
     def acquire(self, key: 'str', blocking: bool = True, timeout: float = 10.0) -> bool:
         if self._lock.acquire(blocking=blocking, timeout=timeout):
             self._key = key  # เก็บคีย์เมื่อได้รับการล็อก
-            print(f"Lock acquired with key: {key}")
+            print(f"ล็อกได้รับการยึดด้วยคีย์: {key}")
             return True
         return False
 
-    def release(self, key, raise_error: bool = False) -> bool:
+    def release(self, raise_error: bool = False) -> bool:
+        # รับคีย์จากผู้ใช้ในฟังก์ชัน release
+        key = input("กรุณากรอกคีย์เพื่อปลดล็อก: ")
+        
         if self._key == key:  # ตรวจสอบว่า key ตรงกับที่เก็บไว้หรือไม่
             self._lock.release()
-            print(f"Lock released with key: {key}")
+            print(f"ปลดล็อกด้วยคีย์: {key}")
             return True
         if raise_error:
-            raise RuntimeError('KeyLock.release called with a non-matching key!')
+            raise RuntimeError('KeyLock.release ถูกเรียกด้วยคีย์ที่ไม่ตรงกัน!')
         return False
 
     def locked(self):
@@ -40,17 +43,13 @@ def test_key_lock():
 
     # ล็อกด้วยคีย์ที่กำหนดใน config
     if key_lock.acquire(configured_key):
-        print("Successfully acquired lock.")
+        print("ล็อกได้รับการยึดสำเร็จ.")
         time.sleep(2)  # รอ 2 วินาทีเพื่อจำลองการทำงาน
-        # ปลดล็อกด้วยคีย์ที่กำหนดใน config
-        if key_lock.release(configured_key):
-            print("Successfully released lock.")
+        # ปลดล็อกโดยการรับคีย์จากผู้ใช้
+        if key_lock.release(raise_error=True):
+            print("ปลดล็อกสำเร็จ.")
     else:
-        print("Failed to acquire lock.")
-
-    # ทดสอบกรณีที่คีย์ไม่ตรงกันในการปลดล็อก
-    if not key_lock.release('wrong_key', raise_error=True):
-        print("Failed to release lock with wrong key.")
+        print("ไม่สามารถยึดล็อกได้.")
 
 # เรียกใช้ฟังก์ชันทดสอบ
 test_key_lock()
