@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 def autoupdate_repository():
     repo_dir = '.'  # ระบุให้ใช้ . (โฟลเดอร์ปัจจุบัน)
-    repo_url = 'https://github.com/earthkcc147/redeem-dis.git'
+    repo_url = 'https://github.com/earthkcc147/Redeem-Dis.git'
 
     # ฟังก์ชันที่ช่วยแสดง progress bar สำหรับคำสั่ง git clone
     def clone_with_progress(repo_url, repo_dir):
