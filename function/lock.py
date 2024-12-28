@@ -2,6 +2,11 @@ from threading import Lock
 from typing import Optional
 import time
 
+# กำหนดคอนฟิกเพื่อให้สามารถกำหนดค่า key ได้
+config = {
+    'lock_key': 'gmr'  # คีย์ที่กำหนดใน config
+}
+
 class KeyLock:
     def __init__(self):
         self._lock = Lock()  # สร้างอ็อบเจกต์ Lock
@@ -30,12 +35,15 @@ class KeyLock:
 def test_key_lock():
     key_lock = KeyLock()
 
-    # ล็อกด้วยคีย์ 'my_key'
-    if key_lock.acquire('my_key'):
+    # ใช้คีย์จากคอนฟิกเพื่อทำการล็อก
+    configured_key = config['lock_key']
+
+    # ล็อกด้วยคีย์ที่กำหนดใน config
+    if key_lock.acquire(configured_key):
         print("Successfully acquired lock.")
         time.sleep(2)  # รอ 2 วินาทีเพื่อจำลองการทำงาน
-        # ปลดล็อกด้วยคีย์ 'my_key'
-        if key_lock.release('my_key'):
+        # ปลดล็อกด้วยคีย์ที่กำหนดใน config
+        if key_lock.release(configured_key):
             print("Successfully released lock.")
     else:
         print("Failed to acquire lock.")
