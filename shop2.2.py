@@ -4,7 +4,7 @@ import json
 import os
 from datetime import datetime
 
-TOKEN = 'YOUR_BOT_TOKEN_HERE'  # ใส่โทเค็นบอทของคุณที่นี่
+TOKEN = 'MTE5MjA0MTI2MTA1NDU3MDUyNg.GmR8Zy.kE1mTrYzUk4Fddkj4R0dKHKfHS-Gf8aEDa0bw0'  # ใส่โทเค็นบอทของคุณที่นี่
 
 # ตั้งค่า intents
 intents = discord.Intents.default()
