@@ -33,11 +33,13 @@ def load_shop_data():
             json.dump(shop_data, f, ensure_ascii=False, indent=4)
         return shop_data
 
-# โหลดข้อมูลสินค้า
-shop_data = load_shop_data()
 
 # ฟังก์ชันแสดงสินค้าและปุ่มซื้อ
 async def send_shop_item(channel, item_id):
+    
+    # โหลดข้อมูลสินค้า
+    shop_data = load_shop_data()
+
     # ค้นหาข้อมูลสินค้าจาก shop.json
     item = next((item for item in shop_data if item["id"] == item_id), None)
 
