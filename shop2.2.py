@@ -1,5 +1,4 @@
 import discord
-from discord.ext import commands
 from discord.ui import Button, View
 import json
 import os
@@ -25,6 +24,7 @@ def load_shop_data():
         with open(data_file, 'r', encoding='utf-8') as f:
             return json.load(f)
     else:
+        # ถ้าไฟล์ไม่มี ให้สร้างไฟล์ใหม่ด้วยข้อมูลสินค้าตัวอย่าง
         shop_data = [
             {"id": 1, "name": "สินค้า 1", "price": 100, "description": "รายละเอียดสินค้าของสินค้า 1", "secret_message": "นี่คือข้อความลับของสินค้า 1"},
             {"id": 2, "name": "สินค้า 2", "price": 200, "description": "รายละเอียดสินค้าของสินค้า 2", "secret_message": "นี่คือข้อความลับของสินค้า 2"}
@@ -33,7 +33,7 @@ def load_shop_data():
             json.dump(shop_data, f, ensure_ascii=False, indent=4)
         return shop_data
 
-# ฟังก์ชันโหลดและบันทึกข้อมูล JSON
+# ฟังก์ชันโหลดข้อมูลจากไฟล์ JSON โดยใช้ guild.id เป็นชื่อไฟล์
 def load_data(guild_id):
     file_path = f"topup/{guild_id}.json"
     if os.path.exists(file_path):
@@ -41,6 +41,7 @@ def load_data(guild_id):
             return json.load(file)
     return {}
 
+# ฟังก์ชันบันทึกข้อมูลลงไฟล์ JSON โดยใช้ guild.id เป็นชื่อไฟล์
 def save_data(guild_id, data):
     file_path = f"topup/{guild_id}.json"
     with open(file_path, "w", encoding="utf-8") as file:
@@ -54,6 +55,7 @@ def update_balance(guild_id, user_id, price, item_id):
         return False, 0
 
     balance = data[str(user_id)].get("balance", 0)
+
     if balance < price:
         return False, balance
 
@@ -63,6 +65,7 @@ def update_balance(guild_id, user_id, price, item_id):
     item = next((item for item in shop_data if item["id"] == item_id), None)
     if item:
         redeem_key = item["name"]
+
         if "history" not in data[str(user_id)]:
             data[str(user_id)]["history"] = []
         data[str(user_id)]["history"].append({
@@ -71,17 +74,21 @@ def update_balance(guild_id, user_id, price, item_id):
             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "status": "success"
         })
+
         save_data(guild_id, data)
         return True, balance
-    return False, balance
+    else:
+        return False, balance
 
 # โหลดข้อมูลสินค้า
-# shop_data = load_shop_data()
+shop_data = load_shop_data()
+
+@client.event
+async def on_ready():
+    print(f"Logged in as {client.user}")
 
 # ฟังก์ชันแสดงสินค้าและปุ่มซื้อ
-async def send_shop_item(interaction, item_id):
-    # โหลดข้อมูลสินค้า
-    shop_data = load_shop_data()
+async def send_shop_item(channel, item_id):
     item = next((item for item in shop_data if item["id"] == item_id), None)
     if item:
         embed = discord.Embed(
@@ -94,18 +101,40 @@ async def send_shop_item(interaction, item_id):
         button = Button(label="ซื้อสินค้า", style=discord.ButtonStyle.green, custom_id=f"buy_{item_id}")
         view = View()
         view.add_item(button)
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-    else:
-        await interaction.response.send_message("ไม่พบสินค้านี้ในร้านค้า!", ephemeral=True)
 
-# อีเวนต์สำหรับปุ่ม
+        await channel.send(embed=embed, view=view)
+
+@client.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    if message.content.startswith("!ร้านค้า1"):
+        await send_shop_item(message.channel, 1)
+    elif message.content.startswith("!ร้านค้า2"):
+        await send_shop_item(message.channel, 2)
+
 @client.event
 async def on_interaction(interaction: discord.Interaction):
-    custom_id = interaction.data.get("custom_id", "")
+    custom_id = interaction.data["custom_id"]
 
     if custom_id.startswith("buy_"):
         item_id = int(custom_id.split("_")[1])
-        await send_shop_item(interaction, item_id)
+        item = next((item for item in shop_data if item["id"] == item_id), None)
+
+        if item:
+            confirm_button = Button(label="ยืนยัน", style=discord.ButtonStyle.success, custom_id=f"confirm_{item_id}")
+            cancel_button = Button(label="ยกเลิก", style=discord.ButtonStyle.danger, custom_id="cancel_button")
+
+            view = View()
+            view.add_item(confirm_button)
+            view.add_item(cancel_button)
+
+            await interaction.response.send_message(
+                f"คุณกำลังจะซื้อสินค้า **{item['name']}** ราคา {item['price']} บาท\nกรุณายืนยันหรือยกเลิก",
+                view=view,
+                ephemeral=True
+            )
 
     elif custom_id.startswith("confirm_"):
         item_id = int(custom_id.split("_")[1])
@@ -117,18 +146,17 @@ async def on_interaction(interaction: discord.Interaction):
             success, new_balance = update_balance(guild_id, user_id, item['price'], item['id'])
 
             if success:
-                await interaction.response.edit_message(
-                    content=f"คุณได้ซื้อสินค้า **{item['name']}** ราคา {item['price']} บาท สำเร็จ!",
-                    view=None
-                )
+                await interaction.response.edit_message(content=f"คุณได้ซื้อสินค้า **{item['name']}** ราคา {item['price']} บาท สำเร็จ!", view=None)
+
                 secret_message = item["secret_message"]
                 try:
                     await interaction.user.send(f"ข้อความลับสำหรับสินค้า **{item['name']}**: {secret_message}")
                 except discord.Forbidden:
-                    await interaction.followup.send("ไม่สามารถส่งข้อความลับได้ (DM ปิดอยู่)", ephemeral=True)
-                await interaction.followup.send(f"ยอดเงินใหม่ของคุณ: {new_balance} บาท", ephemeral=True)
+                    await interaction.followup.send("ไม่สามารถส่งข้อความลับให้คุณได้ เนื่องจากคุณปิดการรับ DM จากบอท", ephemeral=True)
+
+                await interaction.followup.send(f"ยอดเงินของคุณได้รับการอัปเดตใหม่: {new_balance} บาท", ephemeral=True)
             else:
-                await interaction.response.send_message("ยอดเงินไม่เพียงพอ!", ephemeral=True)
+                await interaction.response.send_message("ยอดเงินไม่เพียงพอสำหรับการซื้อสินค้า", ephemeral=True)
 
     elif custom_id == "cancel_button":
         await interaction.response.edit_message(content="คุณได้ยกเลิกการซื้อสินค้าแล้ว!", view=None)
