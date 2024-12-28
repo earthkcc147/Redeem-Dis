@@ -76,10 +76,12 @@ def update_balance(guild_id, user_id, price, item_id):
     return False, balance
 
 # โหลดข้อมูลสินค้า
-shop_data = load_shop_data()
+# shop_data = load_shop_data()
 
 # ฟังก์ชันแสดงสินค้าและปุ่มซื้อ
 async def send_shop_item(interaction, item_id):
+    # โหลดข้อมูลสินค้า
+    shop_data = load_shop_data()
     item = next((item for item in shop_data if item["id"] == item_id), None)
     if item:
         embed = discord.Embed(
