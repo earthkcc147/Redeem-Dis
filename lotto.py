@@ -126,7 +126,7 @@ class LotteryModal(Modal):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 # สร้างฟังก์ชันสุ่มรางวัล
-@tasks.loop(minutes=RAFFLE_INTERVAL)
+@@tasks.loop(minutes=RAFFLE_INTERVAL)
 async def raffle():
     for guild in client.guilds:
         group_id = guild.id
@@ -166,8 +166,8 @@ async def raffle():
             color=discord.Color.gold()
         )
 
-        # ส่งผลรางวัลในช่อง 'general' หรือช่องอื่นๆ ที่ต้องการ
-        channel = discord.utils.get(guild.text_channels, name="general")
+        # ส่งผลรางวัลในช่อง 'lottery'
+        channel = discord.utils.get(guild.text_channels, name="lottery")
         if channel:
             await channel.send(embed=embed)
 
