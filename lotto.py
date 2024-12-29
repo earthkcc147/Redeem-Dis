@@ -96,35 +96,58 @@ class LottoModal(Modal):
                 await interaction.response.send_message("ยอดเงินของคุณไม่เพียงพอในการซื้อล็อตเตอรี่", ephemeral=True)
                 return
 
-            # หักเงินจากยอด Balance
-            balance_data[user_id] = user_balance - total_price
-            save_balance_data(balance_data, self.group_id)
+            # สร้างการยืนยันคำสั่งซื้อ
+            confirm_button = Button(label="ยืนยันการซื้อ", style=discord.ButtonStyle.green)
+            cancel_button = Button(label="ยกเลิกการซื้อ", style=discord.ButtonStyle.red)
 
-            # สุ่มหมายเลขล็อตเตอรี่
-            lotto_numbers = [generate_lotto_number() for _ in range(amount)]
+            async def confirm_callback(interaction: discord.Interaction):
+                # หักเงินจากยอด Balance
+                balance_data[user_id] = user_balance - total_price
+                save_balance_data(balance_data, self.group_id)
 
-            # โหลดข้อมูลล็อตเตอรี่ของกลุ่ม
-            lotto_data = load_lotto_data(self.group_id)
-            if user_id not in lotto_data:
-                lotto_data[user_id] = []
+                # สุ่มหมายเลขล็อตเตอรี่
+                lotto_numbers = [generate_lotto_number() for _ in range(amount)]
 
-            # บันทึกหมายเลขล็อตเตอรี่ของผู้ใช้พร้อมรายละเอียด
-            purchase_details = {
-                "numbers": lotto_numbers,
-                "purchase_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "price": total_price
-            }
-            lotto_data[user_id].append(purchase_details)
+                # โหลดข้อมูลล็อตเตอรี่ของกลุ่ม
+                lotto_data = load_lotto_data(self.group_id)
+                if user_id not in lotto_data:
+                    lotto_data[user_id] = []
 
-            # บันทึกข้อมูลลงไฟล์
-            save_lotto_data(lotto_data, self.group_id)
+                # บันทึกหมายเลขล็อตเตอรี่ของผู้ใช้พร้อมรายละเอียด
+                purchase_details = {
+                    "numbers": lotto_numbers,
+                    "purchase_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "price": total_price
+                }
+                lotto_data[user_id].append(purchase_details)
 
-            # ส่งข้อความแสดงผล
-            lotto_list = "\n".join(str(num) for num in lotto_numbers)
+                # บันทึกข้อมูลลงไฟล์
+                save_lotto_data(lotto_data, self.group_id)
+
+                # ส่งข้อความแสดงผล
+                lotto_list = "\n".join(str(num) for num in lotto_numbers)
+                await interaction.response.send_message(
+                    f"คุณได้ซื้อล็อตเตอรี่ {amount} ใบ\nหมายเลขล็อตเตอรี่ของคุณ:\n{lotto_list}\n"
+                    f"ราคาทั้งหมด: {total_price} บาท", ephemeral=True
+                )
+
+            async def cancel_callback(interaction: discord.Interaction):
+                await interaction.response.send_message("การซื้อถูกยกเลิก", ephemeral=True)
+
+            confirm_button.callback = confirm_callback
+            cancel_button.callback = cancel_callback
+
+            # สร้าง view ที่ใส่ปุ่ม
+            view = View()
+            view.add_item(confirm_button)
+            view.add_item(cancel_button)
+
+            # ส่งข้อความเพื่อยืนยันคำสั่งซื้อ
             await interaction.response.send_message(
-                f"คุณได้ซื้อล็อตเตอรี่ {amount} ใบ\nหมายเลขล็อตเตอรี่ของคุณ:\n{lotto_list}\n"
-                f"ราคาทั้งหมด: {total_price} บาท", ephemeral=True
+                f"คุณต้องการซื้อล็อตเตอรี่ {amount} ใบ รวมทั้งหมด {total_price} บาท\n"
+                f"กรุณายืนยันการซื้อหรือยกเลิก", ephemeral=True, view=view
             )
+
         except ValueError:
             await interaction.response.send_message("กรุณากรอกจำนวนที่เป็นตัวเลข", ephemeral=True)
 
@@ -162,8 +185,3 @@ async def on_message(message):
 
 # เริ่มต้นบอท
 client.run(TOKEN)
-
-
-
-
-เพิ่มการยืนยันคำสั่งซื้อ
