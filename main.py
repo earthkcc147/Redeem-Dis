@@ -1,4 +1,4 @@
-import discord
+ๆชimport discord
 from discord.ui import Button, View, Modal, TextInput
 import requests
 import json
@@ -44,11 +44,22 @@ async def on_ready():
 def load_data(group_id):
     folder_path = "topup"
     data_file = os.path.join(folder_path, f"{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
-    if os.path.exists(data_file):
-        with open(data_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    else:
-        return {}
+    
+    # ถ้าไฟล์ไม่พบ ให้สร้างไฟล์ใหม่และคืนค่าข้อมูลเริ่มต้น
+    if not os.path.exists(data_file):
+        # สร้างโฟลเดอร์ "topup" ถ้ายังไม่มี
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        
+        # สร้างไฟล์ JSON ใหม่ด้วยข้อมูลเริ่มต้น
+        default_data = {}
+        with open(data_file, 'w', encoding='utf-8') as f:
+            json.dump(default_data, f, ensure_ascii=False, indent=4)
+        return default_data
+    
+    # ถ้าไฟล์มีอยู่แล้วให้โหลดข้อมูลจากไฟล์
+    with open(data_file, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 # ฟังก์ชันเพื่อบันทึกข้อมูลลงในไฟล์ JSON
 def save_data(data, group_id):
@@ -56,10 +67,12 @@ def save_data(data, group_id):
     # ตรวจสอบว่าโฟลเดอร์ topup มีอยู่หรือไม่ ถ้าไม่ให้สร้าง
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    
+
     data_file = os.path.join(folder_path, f"{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
     with open(data_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+
+
 
 class GiftLinkModal(Modal):
     def __init__(self, group_id):
