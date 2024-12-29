@@ -282,19 +282,20 @@ class Lottery3DigitsModal(Modal):
         user_data = load_data(self.group_id)
         user_balance = user_data.get(user_id, {}).get("balance", 0)
 
-        if user_balance < LOTTERY_PRICE:
+        # ใช้ LOTTERY_CUSTOM_PRICE แทน LOTTERY_PRICE
+        if user_balance < LOTTERY_CUSTOM_PRICE:
             await interaction.response.send_message("คุณไม่มียอดเงินเพียงพอในการซื้อล็อตเตอรี่", ephemeral=True)
             return
 
         # หักยอดเงินและบันทึกข้อมูล
-        user_data[user_id]["balance"] -= LOTTERY_PRICE
+        user_data[user_id]["balance"] -= LOTTERY_CUSTOM_PRICE
         save_data(user_data, self.group_id)
 
         # บันทึกประวัติการซื้อล็อตเตอรี่
-        save_lotto_history(self.group_id, user_id, [number], LOTTERY_PRICE)
+        save_lotto_history(self.group_id, user_id, [number], LOTTERY_CUSTOM_PRICE)
 
         # ส่งข้อความยืนยัน
-        await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่หมายเลข {number} เลขท้าย 3 ตัว\nยอดเงินที่ถูกหัก: {LOTTERY_PRICE} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
+        await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่หมายเลข {number} เลขท้าย 3 ตัว\nยอดเงินที่ถูกหัก: {LOTTERY_CUSTOM_PRICE} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
 
 
 class LottoLastTwoModal(Modal):
