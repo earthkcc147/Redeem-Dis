@@ -485,4 +485,39 @@ async def on_message(message):
         # ซื้อเลขทั่วไป
         async def lottery_button_callback(interaction: discord.Interaction):
             modal = LotteryModal(group_id)
-            await interaction.response.send_modal(modal
+            await interaction.response.send_modal(modal)
+
+        lottery_button.callback = lottery_button_callback
+
+        # เลขท้าย 3 ตัว
+        async def lottery_3digits_button_callback(interaction: discord.Interaction):
+            modal = Lottery3DigitsModal(group_id)
+            await interaction.response.send_modal(modal)
+
+        lottery_3digits_button.callback = lottery_3digits_button_callback
+
+        # เลขท้าย 2 ตัว
+        async def last_two_button_callback(interaction: discord.Interaction):
+            modal = LottoLastTwoModal(group_id)
+            await interaction.response.send_modal(modal)
+
+        last_two_button.callback = last_two_button_callback
+
+        # ดูประวัติ
+        async def check_lotto_button_callback(interaction: discord.Interaction):
+            # ใช้ interaction.user.id แทน user_id ที่ประกาศใน on_message
+            await check_lotto_history(interaction, group_id, str(interaction.user.id))
+
+        check_lotto_button.callback = check_lotto_button_callback
+
+        view = View()
+        view.add_item(lottery_button)
+        view.add_item(custom_lottery_button)
+        view.add_item(lottery_3digits_button)
+        view.add_item(last_two_button)
+        view.add_item(check_lotto_button)
+
+        await message.channel.send(embed=embed, view=view)
+
+# Run the bot
+client.run("YOUR_DISCORD_BOT_TOKEN")
