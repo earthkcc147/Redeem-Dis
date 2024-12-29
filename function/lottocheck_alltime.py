@@ -93,7 +93,3 @@ async def raffle():
             await channel.send(embed=embed)
 
 
-
-
-
-ตรวจสอบอะไรใน json
