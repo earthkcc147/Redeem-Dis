@@ -356,13 +356,25 @@ class LottoLastTwoModal(Modal):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
-# ฟังก์ชั่นสุ่มรางวัล
+# ฟังก์ชันอ่านข้อมูลการซื้อของผู้ใช้จากไฟล์
+def load_lotto_history(group_id):
+    folder_path = LOTTO_HISTORY_FOLDER_PATH
+    history_file = os.path.join(folder_path, f"lotto{group_id}.json")
+
+    if not os.path.exists(history_file):
+        return {}
+
+    with open(history_file, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+# ฟังก์ชันสุ่มรางวัล
 @tasks.loop(minutes=RAFFLE_INTERVAL)
 async def raffle():
     for guild in client.guilds:
         group_id = guild.id
 
-        user_data = load_data(group_id)
+        # โหลดข้อมูลคำสั่งซื้อจากไฟล์ประวัติ
+        history_data = load_lotto_history(group_id)
         winners = {}  # คำสั่งเก็บผู้ถูกรางวัลสำหรับแต่ละหมายเลข
         all_numbers = []  # รายการเก็บหมายเลขทั้งหมดที่จะใช้ในการสุ่ม
         raffle_results = []  # รายการเก็บผลรางวัลทั้งหมด
@@ -394,14 +406,19 @@ async def raffle():
         last_two_digits = "".join([str(random.randint(0, 9)) for _ in range(2)])
         all_numbers.append(last_two_digits)
 
-        # เลือกผู้ถูกรางวัลโดยมีโอกาส 10% สำหรับแต่ละผู้ใช้
-        for user_id, data in user_data.items():
-            if random.random() < (RAFFLE_CHANCE / 100):
-                winner_number = "".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)])
-                if winner_number not in winners:
-                    winners[winner_number] = [user_id]
-                else:
-                    winners[winner_number].append(user_id)
+        # ค้นหาผู้ถูกรางวัลจากข้อมูลคำสั่งซื้อ
+        for user_id, purchases in history_data.items():
+            for purchase in purchases:
+                lottery_numbers = purchase["lottery_numbers"]
+                total_price = purchase["total_price"]
+
+                if random.random() < (RAFFLE_CHANCE / 100):
+                    # ตรวจสอบว่าหมายเลขนี้ถูกรางวัลหรือไม่
+                    if lottery_numbers in all_numbers:
+                        if lottery_numbers not in winners:
+                            winners[lottery_numbers] = [user_id]
+                        else:
+                            winners[lottery_numbers].append(user_id)
 
         # ตรวจสอบว่าใครถูกรางวัลบ้าง
         for i, number in enumerate(all_numbers):
@@ -429,6 +446,8 @@ async def raffle():
 
                 # เพิ่มยอดเงินให้กับผู้ถูกรางวัล
                 for user_id in winners[number]:
+                    # เพิ่มยอดเงินในบัญชีผู้ชนะ
+                    user_data = load_data(group_id)
                     if user_id in user_data:
                         user_data[user_id]["balance"] += prize_amount
                         save_data(user_data, group_id)
