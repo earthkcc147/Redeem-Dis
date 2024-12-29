@@ -4,6 +4,7 @@ from discord.ui import Button, View, Modal, TextInput
 import json
 import os
 import random
+from datetime import datetime
 
 intents = discord.Intents.default()
 intents.message_content = True  # เปิด intent สำหรับการเข้าถึงเนื้อหาของข้อความ
@@ -12,15 +13,16 @@ client = commands.Bot(command_prefix="!", intents=intents)
 # กำหนด CONFIG
 LOTTERY_PRICE = 50  # ราคา 1 ใบ (บาท)
 NUM_DIGITS = 5  # จำนวนหลักของหมายเลขที่สุ่ม
-FOLDER_PATH = "data"
+TOPUP_FOLDER_PATH = "topup"  # โฟลเดอร์ที่ใช้จัดเก็บไฟล์ JSON สำหรับข้อมูลผู้ใช้
+LOTTO_HISTORY_FOLDER_PATH = "data"  # โฟลเดอร์ที่ใช้จัดเก็บประวัติการซื้อ
 
 # ฟังก์ชันเพื่ออ่านข้อมูลจากไฟล์ JSON
 def load_data(group_id):
-    folder_path = FOLDER_PATH
-    data_file = os.path.join(folder_path, f"lotto{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
+    folder_path = TOPUP_FOLDER_PATH
+    data_file = os.path.join(folder_path, f"{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
 
     if not os.path.exists(data_file):
-        # สร้างโฟลเดอร์ "data" ถ้ายังไม่มี
+        # สร้างโฟลเดอร์ "topup" ถ้ายังไม่มี
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
@@ -36,10 +38,41 @@ def load_data(group_id):
 
 # ฟังก์ชันเพื่อบันทึกข้อมูลลงในไฟล์ JSON
 def save_data(data, group_id):
-    folder_path = FOLDER_PATH
-    data_file = os.path.join(folder_path, f"lotto{group_id}.json")
+    folder_path = TOPUP_FOLDER_PATH
+    data_file = os.path.join(folder_path, f"{group_id}.json")
     with open(data_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+
+# ฟังก์ชันเพื่อบันทึกประวัติการซื้อล็อตเตอรี่
+def save_lotto_history(group_id, user_id, lottery_numbers, total_price):
+    folder_path = LOTTO_HISTORY_FOLDER_PATH
+    history_file = os.path.join(folder_path, f"lotto{group_id}.json")
+
+    # ถ้าไม่มีไฟล์ history ให้สร้างใหม่
+    if not os.path.exists(history_file):
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        with open(history_file, 'w', encoding='utf-8') as f:
+            json.dump({}, f, ensure_ascii=False, indent=4)
+
+    # โหลดประวัติเดิม
+    with open(history_file, 'r', encoding='utf-8') as f:
+        history_data = json.load(f)
+
+    # ถ้าไม่มีประวัติการซื้อของ user นี้ให้สร้างขึ้นใหม่
+    if user_id not in history_data:
+        history_data[user_id] = []
+
+    # บันทึกข้อมูลประวัติการซื้อใหม่
+    history_data[user_id].append({
+        "lottery_numbers": lottery_numbers,
+        "total_price": total_price,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    # บันทึกข้อมูลประวัติลงในไฟล์
+    with open(history_file, 'w', encoding='utf-8') as f:
+        json.dump(history_data, f, ensure_ascii=False, indent=4)
 
 # สร้างบอทและตั้งค่า prefix
 intents = discord.Intents.default()
@@ -79,33 +112,17 @@ class LotteryModal(Modal):
         for _ in range(number_of_tickets):
             lottery_numbers.append("".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)]))
 
-        # สร้างปุ่มให้ยืนยันหรือยกเลิกการซื้อ
-        confirm_button = Button(label="ยืนยัน", style=discord.ButtonStyle.green)
-        cancel_button = Button(label="ยกเลิก", style=discord.ButtonStyle.red)
+        # หักยอด balance
+        user_data[user_id]["balance"] -= total_price
 
-        async def confirm_button_callback(interaction: discord.Interaction):
-            # หักยอด balance
-            user_data[user_id]["balance"] -= total_price
+        # บันทึกข้อมูลใหม่
+        save_data(user_data, self.group_id)
 
-            # บันทึกข้อมูลใหม่
-            save_data(user_data, self.group_id)
+        # บันทึกประวัติการซื้อ
+        save_lotto_history(self.group_id, user_id, lottery_numbers, total_price)
 
-            # แจ้งผลการสุ่มหมายเลขและหัก balance
-            await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่ {number_of_tickets} ใบ\nหมายเลขที่สุ่มได้: {', '.join(lottery_numbers)}\nยอดเงินที่ถูกหัก: {total_price} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
-
-        async def cancel_button_callback(interaction: discord.Interaction):
-            await interaction.response.send_message("การซื้อถูกยกเลิก", ephemeral=True)
-
-        confirm_button.callback = confirm_button_callback
-        cancel_button.callback = cancel_button_callback
-
-        # สร้าง View และเพิ่มปุ่ม
-        view = View()
-        view.add_item(confirm_button)
-        view.add_item(cancel_button)
-
-        # แจ้งเตือนให้ผู้ใช้ยืนยันการซื้อ
-        await interaction.response.send_message(f"คุณต้องการซื้อล็อตเตอรี่ {number_of_tickets} ใบ ใช่หรือไม่? (ราคาทั้งหมด {total_price} บาท)", view=view, ephemeral=True)
+        # แจ้งผลการสุ่มหมายเลขและหัก balance
+        await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่ {number_of_tickets} ใบ\nหมายเลขที่สุ่มได้: {', '.join(lottery_numbers)}\nยอดเงินที่ถูกหัก: {total_price} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
 
 @client.event
 async def on_ready():
