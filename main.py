@@ -480,55 +480,53 @@ class AdminPanelButton(Button):
 async def on_message(message):
     if message.content.lower() == "!เติมเงิน":
         group_id = message.guild.id  # ดึง ID ของกลุ่ม
-        user_id = str(message.author.id)  # ใช้ user id ของ Discord เป็น key
-        user_data = load_data(group_id)  # โหลดข้อมูลของกลุ่ม
+        user_id = str(message.author.id)  # ใช้ ID ของผู้ใช้เป็น key
 
-        # ตรวจสอบว่าผู้ใช้มีข้อมูลในไฟล์หรือไม่
+        # โหลดข้อมูลผู้ใช้จากไฟล์ JSON
+        user_data = load_data(group_id)
+
+        embed = discord.Embed(
+            title="เติมเงิน TrueMoney",
+            description="เลือกการดำเนินการที่ต้องการ",
+            color=discord.Color.blue()
+        )
+
+        # สร้างปุ่มต่างๆ
         if user_id in user_data:
-            embed = discord.Embed(
-                title="เติมเงิน TrueMoney",
-                description="เลือกการดำเนินการที่ต้องการ",
-                color=discord.Color.blue()
-            )
-
-            # สร้างปุ่มต่างๆ
+            # ถ้าผู้ใช้มีข้อมูลแล้ว ให้แสดงปุ่มเติมเงิน
             button_recharge = Button(label="เติมเงิน", style=discord.ButtonStyle.green)
             check_balance_button = CheckBalanceButton(group_id)
             redeem_code_button = RedeemCodeButton(group_id)
+            register_button = None  # ไม่มีปุ่มลงทะเบียน เพราะผู้ใช้ลงทะเบียนแล้ว
+        else:
+            # ถ้าผู้ใช้ยังไม่มีข้อมูล ให้แสดงปุ่มลงทะเบียนแทน
+            button_recharge = None  # ไม่มีปุ่มเติมเงิน
+            register_button = RegisterButton(group_id)  # แสดงปุ่มลงทะเบียน
 
-            async def button_callback(interaction: discord.Interaction):
-                modal = GiftLinkModal(group_id)
-                await interaction.response.send_modal(modal)
+        async def button_callback(interaction: discord.Interaction):
+            modal = GiftLinkModal(group_id)
+            await interaction.response.send_modal(modal)
 
+        if button_recharge:
             button_recharge.callback = button_callback
 
-            view = View()
+        # สร้าง View และเพิ่มปุ่ม
+        view = View()
+        if button_recharge:
             view.add_item(button_recharge)
+        if check_balance_button:
             view.add_item(check_balance_button)
+        if redeem_code_button:
             view.add_item(redeem_code_button)
+        if register_button:
+            view.add_item(register_button)  # เพิ่มปุ่มลงทะเบียนถ้าผู้ใช้ยังไม่ได้ลงทะเบียน
 
-            if message.author.id in ADMIN_IDS:
-                # เพิ่มปุ่ม "Admin Panel" สำหรับแอดมิน
-                admin_panel_button = AdminPanelButton()
-                view.add_item(admin_panel_button)
+        if message.author.id in ADMIN_IDS:
+            # เพิ่มปุ่ม "Admin Panel" สำหรับแอดมิน
+            admin_panel_button = AdminPanelButton()
+            view.add_item(admin_panel_button)
 
-            await message.channel.send(embed=embed, view=view)
-
-        else:
-            # ถ้าผู้ใช้ยังไม่ลงทะเบียนให้แสดงปุ่มลงทะเบียน
-            embed = discord.Embed(
-                title="กรุณาลงทะเบียน",
-                description="คุณยังไม่ได้ลงทะเบียน โปรดคลิกปุ่มด้านล่างเพื่อทำการลงทะเบียน",
-                color=discord.Color.red()
-            )
-
-            # สร้างปุ่มลงทะเบียน
-            register_button = RegisterButton(group_id)
-
-            view = View()
-            view.add_item(register_button)  # แสดงปุ่มลงทะเบียน
-
-            await message.channel.send(embed=embed, view=view)
+        await message.channel.send(embed=embed, view=view)
 
 client.run(TOKEN)
 
