@@ -502,3 +502,19 @@ async def on_message(message):
             await interaction.response.send_modal(modal)
 
         button_recharge.callback = button_callback
+
+        view = View()
+        view.add_item(button_recharge)
+        view.add_item(check_balance_button)
+        view.add_item(redeem_code_button)
+        view.add_item(register_button)  # เพิ่มปุ่มลงทะเบียนใน view
+
+        if message.author.id in ADMIN_IDS:
+            # เพิ่มปุ่ม "Admin Panel" สำหรับแอดมิน
+            admin_panel_button = AdminPanelButton()
+            view.add_item(admin_panel_button)
+
+        await message.channel.send(embed=embed, view=view)
+
+
+client.run(TOKEN)
