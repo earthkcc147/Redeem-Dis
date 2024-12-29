@@ -3,10 +3,16 @@ import random
 import os
 import json
 from discord.ui import Button, View, Modal, TextInput
+import discord
 from discord.ext import commands
 
-TOKEN = "YOUR_DISCORD_BOT_TOKEN"
-client = commands.Bot(command_prefix="!")
+# สร้าง intents
+intents = discord.Intents.default()
+intents.messages = True  # เปิดใช้งาน intents สำหรับรับข้อความ
+
+# สร้างบอทด้วย intents
+client = commands.Bot(command_prefix="!", intents=intents)
+
 
 # CONFIG: กำหนดจำนวนหลักที่สุ่ม
 LOTTERY_DIGITS = 5
