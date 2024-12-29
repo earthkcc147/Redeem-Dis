@@ -360,9 +360,6 @@ class LottoLastTwoModal(Modal):
 # ฟังก์ชันสุ่มรางวัลที่ปรับปรุงแล้ว
 @tasks.loop(minutes=RAFFLE_INTERVAL)
 async def raffle():
-    today = datetime.today()  # วันที่ปัจจุบัน
-    today_week = today.isocalendar()[1]  # สัปดาห์ของปี
-
     for guild in client.guilds:
         group_id = guild.id
 
@@ -374,18 +371,7 @@ async def raffle():
         # กำหนดจำนวนรางวัลที่แต่ละหมายเลขจะได้รับ
         prize_amounts = [prize_1, prize_1, prize_3, prize_4, prize_5]  
 
-        # สร้างหมายเลขรางวัลที่ 1
-        prize_1_number = "".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)])
-        all_numbers.append(prize_1_number)
-
-        # สร้างหมายเลขรางวัลใกล้เคียงรางวัลที่ 1
-        near_prize_1_numbers = [
-            str(int(prize_1_number) - 1).zfill(NUM_DIGITS),
-            str(int(prize_1_number) + 1).zfill(NUM_DIGITS)
-        ]
-        all_numbers.extend(near_prize_1_numbers)
-
-        # สร้างหมายเลขรางวัลอื่นๆ
+        # สร้างหมายเลขทั้งหมดที่เป็นไปได้สำหรับการสุ่ม
         for i in range(1, 6):  # กำหนดจำนวนรางวัลที่ต้องการ (เช่น 5 รางวัล)
             all_numbers.append("".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)]))
 
@@ -400,11 +386,7 @@ async def raffle():
 
         # เลือกผู้ถูกรางวัลโดยมีโอกาส 10% สำหรับแต่ละผู้ใช้
         for user_id, data in user_data.items():
-            # ตรวจสอบว่าอาทิตย์ของการซื้อเป็นสัปดาห์นี้หรือไม่
-            purchase_date = datetime.fromtimestamp(data.get('created_at'))
-            purchase_week = purchase_date.isocalendar()[1]
-
-            if purchase_week == today_week and random.random() < (RAFFLE_CHANCE / 100):
+            if random.random() < (RAFFLE_CHANCE / 100):
                 winner_number = "".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)])
                 if winner_number not in winners:
                     winners[winner_number] = [user_id]
@@ -414,25 +396,17 @@ async def raffle():
         # ตรวจสอบว่าใครถูกรางวัลบ้าง
         for i, number in enumerate(all_numbers):
             # กำหนดประเภทของรางวัลที่จะแสดง
-            if i == 0:
-                prize_type = "รางวัลที่ 1: "
-                prize_amount = prize_1
-            elif i == 1 or i == 2:
-                prize_type = "รางวัลใกล้เคียงรางวัลที่ 1: "
-                prize_amount = near_prize_1
-            elif i < 7:
+            if i < 5:
                 prize_type = f"รางวัลที่ {i + 1}: "
-                prize_amount = prize_amounts[i]
-            elif i < 9:
-                prize_type = f"รางวัลเลขท้าย 3 ตัว {i - 6}: "
-                prize_amount = RAFFLE_3DIGIT_PRIZE
+            elif i < 7:
+                prize_type = f"รางวัลเลขท้าย 3 ตัว {i - 4}: "
             else:
-                prize_type = "รางวัลเลขท้าย 2 ตัว: "
-                prize_amount = RAFFLE_2DIGIT_PRIZE
+                prize_type = f"รางวัลเลขท้าย 2 ตัว: "
 
             # หากมีผู้ถูกรางวัลให้แสดงข้อมูลผู้ถูกรางวัล
             if number in winners:
                 winner_mentions = " ".join([f"<@{user_id}>" for user_id in winners[number]])
+                prize_amount = prize_amounts[i] if i < len(prize_amounts) else RAFFLE_3DIGIT_PRIZE if len(all_numbers) - i <= 3 else RAFFLE_2DIGIT_PRIZE
                 raffle_results.append(f"{prize_type}{winner_mentions} - หมายเลข: {number} - รับเงิน {prize_amount} บาท")
 
                 # เพิ่มยอดเงินให้กับผู้ถูกรางวัล
