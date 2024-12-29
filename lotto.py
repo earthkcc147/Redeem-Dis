@@ -131,6 +131,64 @@ class LotteryModal(Modal):
 
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
+
+class CustomLotteryModal(Modal):
+    def __init__(self, group_id):
+        super().__init__(title="ซื้อเลขล็อตเตอรี่เอง")
+        self.group_id = group_id
+
+        self.number_input = TextInput(
+            label="กรอกหมายเลขล็อตเตอรี่ที่ต้องการซื้อ",
+            placeholder="กรอกหมายเลขที่ต้องการ (เช่น 12345)",
+            required=True,
+            min_length=NUM_DIGITS,
+            max_length=NUM_DIGITS
+        )
+        self.add_item(self.number_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        lottery_number = self.number_input.value
+        user_id = str(interaction.user.id)
+
+        user_data = load_data(self.group_id)
+
+        user_balance = user_data.get(user_id, {}).get("balance", 0)
+        total_price = LOTTERY_PRICE
+
+        if user_balance < total_price:
+            await interaction.response.send_message("คุณไม่มียอดเงินเพียงพอในการซื้อล็อตเตอรี่", ephemeral=True)
+            return
+
+        # บันทึกหมายเลขที่ผู้ใช้เลือก
+        embed = discord.Embed(
+            title="ยืนยันคำสั่งซื้อ",
+            description=f"คุณต้องการซื้อหมายเลข: {lottery_number}\nยอดเงินที่ถูกหัก: {total_price} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance'] - total_price} บาท",
+            color=discord.Color.green()
+        )
+
+        confirm_button = Button(label="ตกลง", style=discord.ButtonStyle.green)
+        cancel_button = Button(label="ยกเลิก", style=discord.ButtonStyle.red)
+
+        async def confirm_button_callback(interaction: discord.Interaction):
+            user_data[user_id]["balance"] -= total_price
+            save_data(user_data, self.group_id)
+            save_lotto_history(self.group_id, user_id, [lottery_number], total_price)
+
+            await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่หมายเลข {lottery_number}\nยอดเงินที่ถูกหัก: {total_price} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
+
+        async def cancel_button_callback(interaction: discord.Interaction):
+            await interaction.response.send_message("ยกเลิกการซื้อล็อตเตอรี่", ephemeral=True)
+
+        confirm_button.callback = confirm_button_callback
+        cancel_button.callback = cancel_button_callback
+
+        view = View()
+        view.add_item(confirm_button)
+        view.add_item(cancel_button)
+
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+
 # สร้างฟังก์ชันสุ่มรางวัล
 @tasks.loop(minutes=RAFFLE_INTERVAL)
 async def raffle():
@@ -208,7 +266,16 @@ async def on_message(message):
         )
 
         lottery_button = Button(label="ซื้อล็อตเตอรี่", style=discord.ButtonStyle.green)
+        custom_lottery_button = Button(label="ซื้อเลขเอง", style=discord.ButtonStyle.blurple)
+        
+        # ปุ่มซื้อเลขเอง
+        async def custom_lottery_button_callback(interaction: discord.Interaction):
+            modal = CustomLotteryModal(group_id)
+            await interaction.response.send_modal(modal)
 
+        custom_lottery_button.callback = custom_lottery_button_callback
+
+        # ซื้อเลขทั่วไป
         async def lottery_button_callback(interaction: discord.Interaction):
             modal = LotteryModal(group_id)
             await interaction.response.send_modal(modal)
@@ -217,6 +284,7 @@ async def on_message(message):
 
         view = View()
         view.add_item(lottery_button)
+        view.add_item(custom_lottery_button)
 
         await message.channel.send(embed=embed, view=view)
 
