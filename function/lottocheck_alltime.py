@@ -4,7 +4,7 @@ async def raffle():
         group_id = guild.id
 
         user_data = load_data(group_id)
-        winners = {}  # เก็บผู้ถูกรางวัลสำหรับแต่ละหมายเลข
+        winners = {}  # คำสั่งเก็บผู้ถูกรางวัลสำหรับแต่ละหมายเลข
         all_numbers = []  # รายการเก็บหมายเลขทั้งหมดที่จะใช้ในการสุ่ม
         raffle_results = []  # รายการเก็บผลรางวัลทั้งหมด
 
@@ -22,8 +22,8 @@ async def raffle():
         ]
         all_numbers.extend(near_prize_1_numbers)
 
-        # เพิ่มหมายเลขสำหรับรางวัลที่ 2-5
-        for i in range(1, 6):  
+        # สร้างหมายเลขทั้งหมดที่เป็นไปได้สำหรับการสุ่ม (รางวัลที่ 2-5)
+        for i in range(1, 6):  # กำหนดจำนวนรางวัลที่ต้องการ (เช่น 5 รางวัล)
             all_numbers.append("".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)]))
 
         # เพิ่มหมายเลขสำหรับรางวัลเลขท้าย 3 ตัว (2 รางวัล)
@@ -46,16 +46,14 @@ async def raffle():
 
         # ตรวจสอบว่าใครถูกรางวัลบ้าง
         for i, number in enumerate(all_numbers):
+            # กำหนดประเภทของรางวัลที่จะแสดง
             if i == 0:
                 prize_type = "รางวัลที่ 1: "
                 prize_amount = prize_1
-            elif i == 1:
-                prize_type = "รางวัลใกล้เคียงรางวัลที่ 1 - 1: "
+            elif i == 1 or i == 2:  # รางวัลใกล้เคียงรางวัลที่ 1
+                prize_type = f"รางวัลใกล้เคียงรางวัลที่ 1 {i}: "
                 prize_amount = near_prize_1
-            elif i == 2:
-                prize_type = "รางวัลใกล้เคียงรางวัลที่ 1 - 2: "
-                prize_amount = near_prize_1
-            elif i < 6:
+            elif i < len(prize_amounts):  # ตรวจสอบให้แน่ใจว่า i อยู่ในขอบเขตของ prize_amounts
                 prize_type = f"รางวัลที่ {i}: "
                 prize_amount = prize_amounts[i]
             elif i < 8:
@@ -91,5 +89,6 @@ async def raffle():
         channel = discord.utils.get(guild.text_channels, name="lottery")
         if channel:
             await channel.send(embed=embed)
+
 
 
