@@ -478,6 +478,163 @@ async def raffle():
         if channel:
             await channel.send(embed=embed)
 
+class AdminSettingsModal(Modal):
+    def __init__(self, group_id):
+        super().__init__(title="ตั้งค่าล็อตเตอรี่สำหรับแอดมิน")
+        self.group_id = group_id
+
+        # กำหนด input สำหรับราคา
+        self.price_input = TextInput(
+            label="ราคาล็อตเตอรี่ 1 ใบ (บาท)",
+            placeholder="กรอกจำนวนราคา",
+            required=True,
+            value=str(LOTTERY_PRICE),
+            min_length=1,
+            max_length=5
+        )
+        self.custom_price_input = TextInput(  # เพิ่มฟิลด์สำหรับ LOTTERY_CUSTOM_PRICE
+            label="ราคาล็อตเตอรี่ 1 ใบ (ค่าปรับแต่ง)",
+            placeholder="กรอกจำนวนราคาปรับแต่ง",
+            required=True,
+            value=str(LOTTERY_CUSTOM_PRICE),
+            min_length=1,
+            max_length=5
+        )
+        self.interval_input = TextInput(
+            label="ระยะห่างในการสุ่มรางวัล (นาที)",
+            placeholder="กรอกจำนวนระยะห่าง",
+            required=True,
+            value=str(RAFFLE_INTERVAL),
+            min_length=1,
+            max_length=3
+        )
+        self.chance_input = TextInput(
+            label="โอกาสในการถูกรางวัล (%)",
+            placeholder="กรอกโอกาสที่ต้องการ",
+            required=True,
+            value=str(RAFFLE_CHANCE),
+            min_length=1,
+            max_length=3
+        )
+        self.prize_1_input = TextInput(
+            label="รางวัลที่ 1 (บาท)",
+            placeholder="กรอกรางวัลที่ 1",
+            required=True,
+            value=str(prize_1),
+            min_length=1,
+            max_length=5
+        )
+        self.near_prize_1_input = TextInput(
+            label="รางวัลใกล้เคียงที่ 1 (บาท)",
+            placeholder="กรอกรางวัลใกล้เคียงที่ 1",
+            required=True,
+            value=str(near_prize_1),
+            min_length=1,
+            max_length=5
+        )
+        self.prize_2_input = TextInput(
+            label="รางวัลที่ 2 (บาท)",
+            placeholder="กรอกรางวัลที่ 2",
+            required=True,
+            value=str(prize_2),
+            min_length=1,
+            max_length=5
+        )
+        self.prize_3_input = TextInput(
+            label="รางวัลที่ 3 (บาท)",
+            placeholder="กรอกรางวัลที่ 3",
+            required=True,
+            value=str(prize_3),
+            min_length=1,
+            max_length=5
+        )
+        self.prize_4_input = TextInput(
+            label="รางวัลที่ 4 (บาท)",
+            placeholder="กรอกรางวัลที่ 4",
+            required=True,
+            value=str(prize_4),
+            min_length=1,
+            max_length=5
+        )
+        self.prize_5_input = TextInput(
+            label="รางวัลที่ 5 (บาท)",
+            placeholder="กรอกรางวัลที่ 5",
+            required=True,
+            value=str(prize_5),
+            min_length=1,
+            max_length=5
+        )
+        self.raffle_3digit_input = TextInput(
+            label="รางวัลเลขท้าย 3 ตัว (บาท)",
+            placeholder="กรอกรางวัลเลขท้าย 3 ตัว",
+            required=True,
+            value=str(RAFFLE_3DIGIT_PRIZE),
+            min_length=1,
+            max_length=5
+        )
+        self.raffle_2digit_input = TextInput(
+            label="รางวัลเลขท้าย 2 ตัว (บาท)",
+            placeholder="กรอกรางวัลเลขท้าย 2 ตัว",
+            required=True,
+            value=str(RAFFLE_2DIGIT_PRIZE),
+            min_length=1,
+            max_length=5
+        )
+
+        # เพิ่ม input field ทั้งหมด
+        self.add_item(self.price_input)
+        self.add_item(self.custom_price_input)  # เพิ่ม input สำหรับราคาแบบปรับแต่ง
+        self.add_item(self.interval_input)
+        self.add_item(self.chance_input)
+        self.add_item(self.prize_1_input)
+        self.add_item(self.near_prize_1_input)
+        self.add_item(self.prize_2_input)
+        self.add_item(self.prize_3_input)
+        self.add_item(self.prize_4_input)
+        self.add_item(self.prize_5_input)
+        self.add_item(self.raffle_3digit_input)
+        self.add_item(self.raffle_2digit_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        user_id = interaction.user.id
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("คุณต้องเป็นแอดมินในการปรับแต่งการตั้งค่า", ephemeral=True)
+            return
+
+        # รับค่าจากฟอร์ม
+        global LOTTERY_PRICE, LOTTERY_CUSTOM_PRICE, RAFFLE_INTERVAL, RAFFLE_CHANCE, prize_1, near_prize_1, prize_2, prize_3, prize_4, prize_5, RAFFLE_3DIGIT_PRIZE, RAFFLE_2DIGIT_PRIZE
+        LOTTERY_PRICE = int(self.price_input.value)
+        LOTTERY_CUSTOM_PRICE = int(self.custom_price_input.value)  # เก็บค่าจาก custom price
+        RAFFLE_INTERVAL = int(self.interval_input.value)
+        RAFFLE_CHANCE = float(self.chance_input.value)
+        prize_1 = int(self.prize_1_input.value)
+        near_prize_1 = int(self.near_prize_1_input.value)
+        prize_2 = int(self.prize_2_input.value)
+        prize_3 = int(self.prize_3_input.value)
+        prize_4 = int(self.prize_4_input.value)
+        prize_5 = int(self.prize_5_input.value)
+        RAFFLE_3DIGIT_PRIZE = int(self.raffle_3digit_input.value)
+        RAFFLE_2DIGIT_PRIZE = int(self.raffle_2digit_input.value)
+
+        # ส่งข้อความยืนยัน
+        await interaction.response.send_message(
+            f"ตั้งค่าล็อตเตอรี่ได้อัปเดตแล้ว:\n"
+            f"ราคาล็อตเตอรี่ 1 ใบ: {LOTTERY_PRICE} บาท\n"
+            f"ราคาล็อตเตอรี่ 1 ใบ (ปรับแต่ง): {LOTTERY_CUSTOM_PRICE} บาท\n"
+            f"ระยะห่างในการสุ่มรางวัล: {RAFFLE_INTERVAL} นาที\n"
+            f"โอกาสในการถูกรางวัล: {RAFFLE_CHANCE}%\n"
+            f"รางวัลที่ 1: {prize_1} บาท\n"
+            f"รางวัลใกล้เคียงที่ 1: {near_prize_1} บาท\n"
+            f"รางวัลที่ 2: {prize_2} บาท\n"
+            f"รางวัลที่ 3: {prize_3} บาท\n"
+            f"รางวัลที่ 4: {prize_4} บาท\n"
+            f"รางวัลที่ 5: {prize_5} บาท\n"
+            f"รางวัลเลขท้าย 3 ตัว: {RAFFLE_3DIGIT_PRIZE} บาท\n"
+            f"รางวัลเลขท้าย 2 ตัว: {RAFFLE_2DIGIT_PRIZE} บาท",
+            ephemeral=True
+        )
+
+
 
 @client.event
 async def on_ready():
@@ -503,7 +660,8 @@ async def on_message(message):
         lottery_3digits_button = Button(label="ซื้อเลขท้าย 3 ตัว", style=discord.ButtonStyle.primary)
         last_two_button = Button(label="ซื้อเลขท้าย 2 ตัว", style=discord.ButtonStyle.primary)
         check_lotto_button = Button(label="ตรวจสอบล็อตเตอรี่ที่มี", style=discord.ButtonStyle.blurple)
-        
+        settings_button = Button(label="ตั้งค่าล็อตเตอรี่", style=discord.ButtonStyle.red)  # ปุ่มตั้งค่า
+
         # ปุ่มซื้อเลขเอง
         async def custom_lottery_button_callback(interaction: discord.Interaction):
             modal = CustomLotteryModal(group_id)
@@ -522,7 +680,7 @@ async def on_message(message):
         async def lottery_3digits_button_callback(interaction: discord.Interaction):
             modal = Lottery3DigitsModal(group_id)
             await interaction.response.send_modal(modal)
-        
+
         lottery_3digits_button.callback = lottery_3digits_button_callback
 
         # เลขท้าย 2 ตัว
@@ -539,12 +697,25 @@ async def on_message(message):
 
         check_lotto_button.callback = check_lotto_button_callback
 
+        # ตั้งค่าล็อตเตอรี่
+        async def settings_button_callback(interaction: discord.Interaction):
+            # ตรวจสอบว่าเป็นแอดมินหรือไม่
+            if interaction.user.guild_permissions.administrator:
+                modal = AdminSettingsModal(group_id)
+                await interaction.response.send_modal(modal)
+            else:
+                await interaction.response.send_message("คุณต้องเป็นแอดมินในการตั้งค่าล็อตเตอรี่", ephemeral=True)
+
+        settings_button.callback = settings_button_callback
+
+        # เพิ่มปุ่มทั้งหมดลงใน view
         view = View()
         view.add_item(lottery_button)
         view.add_item(custom_lottery_button)
         view.add_item(lottery_3digits_button)
         view.add_item(last_two_button)
         view.add_item(check_lotto_button)
+        view.add_item(settings_button)  # เพิ่มปุ่มตั้งค่า
 
         await message.channel.send(embed=embed, view=view)
 
