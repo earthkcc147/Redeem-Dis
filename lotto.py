@@ -292,7 +292,7 @@ class LottoLastTwoModal(Modal):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
-# สร้างฟังก์ชันสุ่มรางวัล
+# ฟังก์ชันสุ่มรางวัลที่ปรับปรุงแล้ว
 @tasks.loop(minutes=RAFFLE_INTERVAL)
 async def raffle():
     for guild in client.guilds:
@@ -310,6 +310,15 @@ async def raffle():
         for i in range(1, 6):  # กำหนดจำนวนรางวัลที่ต้องการ (เช่น 5 รางวัล)
             all_numbers.append("".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)]))
 
+        # เพิ่มหมายเลขสำหรับรางวัลเลขท้าย 3 ตัว (2 รางวัล)
+        for _ in range(2):
+            last_three_digits = "".join([str(random.randint(0, 9)) for _ in range(3)])
+            all_numbers.append(last_three_digits)
+
+        # เพิ่มหมายเลขสำหรับรางวัลเลขท้าย 2 ตัว (1 รางวัล)
+        last_two_digits = "".join([str(random.randint(0, 9)) for _ in range(2)])
+        all_numbers.append(last_two_digits)
+
         # เลือกผู้ถูกรางวัลโดยมีโอกาส 10% สำหรับแต่ละผู้ใช้
         for user_id, data in user_data.items():
             if random.random() < (RAFFLE_CHANCE / 100):
@@ -324,7 +333,7 @@ async def raffle():
             # หากมีผู้ถูกรางวัลให้แสดงข้อมูลผู้ถูกรางวัล
             if number in winners:
                 winner_mentions = " ".join([f"<@{user_id}>" for user_id in winners[number]])
-                prize_amount = prize_amounts[i]  # กำหนดรางวัลตามลำดับ
+                prize_amount = prize_amounts[i] if i < len(prize_amounts) else RAFFLE_3DIGIT_PRIZE if len(all_numbers) - i <= 3 else RAFFLE_2DIGIT_PRIZE
                 raffle_results.append(f"รางวัลที่ {i + 1}: {winner_mentions} - หมายเลข: {number} - รับเงิน {prize_amount} บาท")
 
                 # เพิ่มยอดเงินให้กับผู้ถูกรางวัล
