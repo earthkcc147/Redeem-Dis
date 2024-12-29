@@ -412,7 +412,7 @@ async def raffle():
             elif i == 1 or i == 2:  # รางวัลใกล้เคียงรางวัลที่ 1
                 prize_type = f"รางวัลใกล้เคียงรางวัลที่ 1 {i}: "
                 prize_amount = near_prize_1
-            elif i < 6:
+            elif i < len(prize_amounts):  # ตรวจสอบให้แน่ใจว่า i อยู่ในขอบเขตของ prize_amounts
                 prize_type = f"รางวัลที่ {i}: "
                 prize_amount = prize_amounts[i]
             elif i < 8:
