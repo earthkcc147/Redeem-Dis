@@ -154,7 +154,7 @@ class CustomLotteryModal(Modal):
         user_data = load_data(self.group_id)
 
         user_balance = user_data.get(user_id, {}).get("balance", 0)
-        total_price = LOTTERY_PRICE
+        total_price = LOTTERY_CUSTOM_PRICE
 
         if user_balance < total_price:
             await interaction.response.send_message("คุณไม่มียอดเงินเพียงพอในการซื้อล็อตเตอรี่", ephemeral=True)
