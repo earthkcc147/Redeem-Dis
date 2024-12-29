@@ -2,16 +2,25 @@ import discord
 from discord.ext import commands
 from discord.ui import Button, View
 
+# กำหนด CONFIG สำหรับ ID ของยศ
+CONFIG = {
+    "role_id": 1322903274482962505  # แทนที่ด้วย ID ยศจริง
+}
+
 # ตั้งค่าบอท
 intents = discord.Intents.default()
 intents.members = True
 client = commands.Bot(command_prefix="!", intents=intents)
 
-# คำสั่ง !รับยศ @Role
+# คำสั่ง !ยศ
 @client.command()
-async def รับยศ(ctx, role: discord.Role = None):
+async def ยศ(ctx):
+    role_id = CONFIG.get("role_id")
+    guild = ctx.guild
+    role = guild.get_role(role_id)
+
     if not role:
-        await ctx.send("❌ กรุณาแท็กยศที่ต้องการ เช่น `!รับยศ @ชื่อยศ`")
+        await ctx.send("❌ ไม่พบยศในเซิร์ฟเวอร์ กรุณาตรวจสอบการตั้งค่า")
         return
 
     # Embed
@@ -41,7 +50,7 @@ async def รับยศ(ctx, role: discord.Role = None):
     view = View()
     view.add_item(button)
 
-    # ส่ง Embed พร้อมปุ่มในห้องที่พิมพ์คำสั่ง
+    # ส่ง Embed พร้อมปุ่ม
     await ctx.send(embed=embed, view=view)
 
 # รันบอท
