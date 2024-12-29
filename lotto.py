@@ -367,8 +367,8 @@ async def on_message(message):
 
         lottery_button = Button(label="ซื้อล็อตเตอรี่", style=discord.ButtonStyle.green)
         custom_lottery_button = Button(label="ซื้อเลขเอง", style=discord.ButtonStyle.blurple)
-        lottery_3digits_button = Button(label="ซื้อเลขท้าย 3 ตัว", style=discord.ButtonStyle.blue)
-        last_two_button = Button(label="ซื้อเลขท้าย 2 ตัว", style=discord.ButtonStyle.blue)
+        lottery_3digits_button = Button(label="ซื้อเลขท้าย 3 ตัว", style=discord.ButtonStyle.primary)
+        last_two_button = Button(label="ซื้อเลขท้าย 2 ตัว", style=discord.ButtonStyle.primary)
         
         # ปุ่มซื้อเลขเอง
         async def custom_lottery_button_callback(interaction: discord.Interaction):
