@@ -24,7 +24,6 @@ prize_2 = 500    # รางวัล 500 บาท
 prize_3 = 300    # รางวัล 300 บาท
 prize_4 = 100    # รางวัล 100 บาท
 prize_5 = 50      # รางวัล 50 บาท
-
 RAFFLE_3DIGIT_PRIZE = 2000  # รางวัลเลขท้าย 3 ตัว
 RAFFLE_2DIGIT_PRIZE = 3000  # รางวัลเลขท้าย 2 ตัว
 
@@ -75,6 +74,70 @@ def save_lotto_history(group_id, user_id, lottery_numbers, total_price):
 
     with open(history_file, 'w', encoding='utf-8') as f:
         json.dump(history_data, f, ensure_ascii=False, indent=4)
+
+
+# ฟังก์ชันในการดึงข้อมูลล็อตเตอรี่ที่ผู้ใช้ได้ซื้อมาจากไฟล์ JSON
+async def check_lotto_history(interaction: discord.Interaction, group_id, user_id):
+    history_file = os.path.join(LOTTO_HISTORY_FOLDER_PATH, f"lotto{group_id}.json")
+
+    if not os.path.exists(history_file):
+        await interaction.response.send_message("ไม่มีประวัติการซื้อล็อตเตอรี่", ephemeral=True)
+        return
+
+    with open(history_file, 'r', encoding='utf-8') as f:
+        history_data = json.load(f)
+
+    if user_id not in history_data or not history_data[user_id]:
+        await interaction.response.send_message("คุณยังไม่มีประวัติการซื้อล็อตเตอรี่", ephemeral=True)
+        return
+
+    history_entries = history_data[user_id]
+    history_text = "\n".join([
+        f"หมายเลขล็อตเตอรี่: {entry['lottery_numbers']} | ยอดเงินที่ใช้: {entry['total_price']} บาท | วันที่: {entry['date']}"
+        for entry in history_entries
+    ])
+
+    embed = discord.Embed(
+        title="ประวัติการซื้อล็อตเตอรี่",
+        description=history_text,
+        color=discord.Color.blue()
+    )
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+# เพิ่มปุ่มตรวจสอบล็อตเตอรี่
+@client.event
+async def on_message(message):
+    if message.content.lower() == "!lottery":
+        group_id = message.guild.id  # ดึง ID ของกลุ่ม
+        user_id = str(message.author.id)  # ดึง ID ของผู้ใช้
+
+        embed = discord.Embed(
+            title="ล็อตเตอรี่",
+            description=f"ราคาล็อตเตอรี่ 1 ใบ = {LOTTERY_PRICE} บาท\nเลือกจำนวนล็อตเตอรี่ที่ต้องการซื้อ",
+            color=discord.Color.green()
+        )
+
+        lottery_button = Button(label="ซื้อล็อตเตอรี่", style=discord.ButtonStyle.green)
+        check_lotto_button = Button(label="ตรวจสอบล็อตเตอรี่ที่มี", style=discord.ButtonStyle.blurple)
+
+        async def lottery_button_callback(interaction: discord.Interaction):
+            modal = LotteryModal(group_id)
+            await interaction.response.send_modal(modal)
+
+        async def check_lotto_button_callback(interaction: discord.Interaction):
+            # เปลี่ยนการใช้ user_id เป็น interaction.user.id
+            await check_lotto_history(interaction, group_id, str(interaction.user.id))
+
+        lottery_button.callback = lottery_button_callback
+        check_lotto_button.callback = check_lotto_button_callback
+
+        view = View()
+        view.add_item(lottery_button)
+        view.add_item(check_lotto_button)
+
+        await message.channel.send(embed=embed, view=view)
+
 
 class LotteryModal(Modal):
     def __init__(self, group_id):
@@ -330,11 +393,19 @@ async def raffle():
 
         # ตรวจสอบว่าใครถูกรางวัลบ้าง
         for i, number in enumerate(all_numbers):
+            # กำหนดประเภทของรางวัลที่จะแสดง
+            if i < 5:
+                prize_type = f"รางวัลที่ {i + 1}: "
+            elif i < 7:
+                prize_type = f"รางวัลเลขท้าย 3 ตัว {i - 4}: "
+            else:
+                prize_type = f"รางวัลเลขท้าย 2 ตัว: "
+
             # หากมีผู้ถูกรางวัลให้แสดงข้อมูลผู้ถูกรางวัล
             if number in winners:
                 winner_mentions = " ".join([f"<@{user_id}>" for user_id in winners[number]])
                 prize_amount = prize_amounts[i] if i < len(prize_amounts) else RAFFLE_3DIGIT_PRIZE if len(all_numbers) - i <= 3 else RAFFLE_2DIGIT_PRIZE
-                raffle_results.append(f"รางวัลที่ {i + 1}: {winner_mentions} - หมายเลข: {number} - รับเงิน {prize_amount} บาท")
+                raffle_results.append(f"{prize_type}{winner_mentions} - หมายเลข: {number} - รับเงิน {prize_amount} บาท")
 
                 # เพิ่มยอดเงินให้กับผู้ถูกรางวัล
                 for user_id in winners[number]:
@@ -344,7 +415,7 @@ async def raffle():
 
             else:
                 # หากไม่มีผู้ถูกรางวัล
-                raffle_results.append(f"รางวัลที่ {i + 1}: ไม่มีผู้ที่ถูกรางวัล - หมายเลข: {number}")
+                raffle_results.append(f"{prize_type}ไม่มีผู้ที่ถูกรางวัล - หมายเลข: {number}")
 
         # สร้าง Embed เพื่อประกาศผลรางวัล
         embed = discord.Embed(
@@ -382,6 +453,7 @@ async def on_message(message):
         custom_lottery_button = Button(label="ซื้อเลขเอง", style=discord.ButtonStyle.blurple)
         lottery_3digits_button = Button(label="ซื้อเลขท้าย 3 ตัว", style=discord.ButtonStyle.primary)
         last_two_button = Button(label="ซื้อเลขท้าย 2 ตัว", style=discord.ButtonStyle.primary)
+        check_lotto_button = Button(label="ตรวจสอบล็อตเตอรี่ที่มี", style=discord.ButtonStyle.blurple)
 
         # ปุ่มซื้อเลขเอง
         async def custom_lottery_button_callback(interaction: discord.Interaction):
@@ -411,13 +483,7 @@ async def on_message(message):
 
         last_two_button.callback = last_two_button_callback
 
-        view = View()
-        view.add_item(lottery_button)
-        view.add_item(custom_lottery_button)
-        view.add_item(lottery_3digits_button)
-        view.add_item(last_two_button)
-
-        await message.channel.send(embed=embed, view=view)
-
-# Run the bot
-client.run("YOUR_DISCORD_BOT_TOKEN")
+        # ดูประวัติ
+        async def check_lotto_button_callback(interaction: discord.Interaction):
+            # ใช้ interaction.user.id แทน user_id ที่ประกาศใน on_message
+            awa
