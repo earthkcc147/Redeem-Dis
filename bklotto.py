@@ -17,7 +17,7 @@ NUM_DIGITS = 5  # จำนวนหลักของหมายเลขท�
 TOPUP_FOLDER_PATH = "topup"  # โฟลเดอร์ที่ใช้จัดเก็บไฟล์ JSON สำหรับข้อมูลผู้ใช้
 LOTTO_HISTORY_FOLDER_PATH = "data"  # โฟลเดอร์ที่ใช้จัดเก็บประวัติการซื้อ
 RAFFLE_INTERVAL = 1  # เวลาระยะห่างในการสุ่มรางวัล (นาที)
-RAFFLE_CHANCE = 100.0  # โอกาสในการมีผู้ถูกรางวัล (เปอร์เซ็นต์)
+RAFFLE_CHANCE = 10.0  # โอกาสในการมีผู้ถูกรางวัล (เปอร์เซ็นต์)
 # กำหนดจำนวนรางวัลที่แต่ละหมายเลขจะได้รับ
 prize_1 = 1000  # รางวัล 1000 บาท
 near_prize_1 = 800 # รางวัล 800 บาท
@@ -282,19 +282,20 @@ class Lottery3DigitsModal(Modal):
         user_data = load_data(self.group_id)
         user_balance = user_data.get(user_id, {}).get("balance", 0)
 
-        if user_balance < LOTTERY_PRICE:
+        # ใช้ LOTTERY_CUSTOM_PRICE แทน LOTTERY_PRICE
+        if user_balance < LOTTERY_CUSTOM_PRICE:
             await interaction.response.send_message("คุณไม่มียอดเงินเพียงพอในการซื้อล็อตเตอรี่", ephemeral=True)
             return
 
         # หักยอดเงินและบันทึกข้อมูล
-        user_data[user_id]["balance"] -= LOTTERY_PRICE
+        user_data[user_id]["balance"] -= LOTTERY_CUSTOM_PRICE
         save_data(user_data, self.group_id)
 
         # บันทึกประวัติการซื้อล็อตเตอรี่
-        save_lotto_history(self.group_id, user_id, [number], LOTTERY_PRICE)
+        save_lotto_history(self.group_id, user_id, [number], LOTTERY_CUSTOM_PRICE)
 
         # ส่งข้อความยืนยัน
-        await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่หมายเลข {number} เลขท้าย 3 ตัว\nยอดเงินที่ถูกหัก: {LOTTERY_PRICE} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
+        await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่หมายเลข {number} เลขท้าย 3 ตัว\nยอดเงินที่ถูกหัก: {LOTTERY_CUSTOM_PRICE} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
 
 
 class LottoLastTwoModal(Modal):
@@ -321,7 +322,7 @@ class LottoLastTwoModal(Modal):
 
         user_data = load_data(self.group_id)
         user_balance = user_data.get(user_id, {}).get("balance", 0)
-        total_price = LOTTERY_PRICE  # ราคาคงที่สำหรับการซื้อเลขท้าย 2 ตัว
+        total_price = LOTTERY_CUSTOM_PRICE  # เปลี่ยนมาใช้ LOTTERY_CUSTOM_PRICE
 
         if user_balance < total_price:
             await interaction.response.send_message("คุณไม่มียอดเงินเพียงพอในการซื้อเลขท้าย 2 ตัว", ephemeral=True)
@@ -356,13 +357,34 @@ class LottoLastTwoModal(Modal):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
-# ฟังก์ชั่นสุ่มรางวัล
+# ฟังก์ชันอ่านข้อมูลการซื้อของผู้ใช้จากไฟล์ (เฉพาะคำสั่งซื้อในวันนี้)
+def load_lotto_history(group_id):
+    folder_path = LOTTO_HISTORY_FOLDER_PATH
+    history_file = os.path.join(folder_path, f"lotto{group_id}.json")
+
+    if not os.path.exists(history_file):
+        return {}
+
+    with open(history_file, 'r', encoding='utf-8') as f:
+        history_data = json.load(f)
+
+    # ฟังก์ชันกรองคำสั่งซื้อที่เกิดขึ้นในวันนี้
+    today = datetime.now().strftime('%Y-%m-%d')
+    filtered_history = {}
+
+    for user_id, purchases in history_data.items():
+        filtered_history[user_id] = [purchase for purchase in purchases if purchase['date'].startswith(today)]
+
+    return filtered_history
+
+# ฟังก์ชันสุ่มรางวัล
 @tasks.loop(minutes=RAFFLE_INTERVAL)
 async def raffle():
     for guild in client.guilds:
         group_id = guild.id
 
-        user_data = load_data(group_id)
+        # โหลดข้อมูลคำสั่งซื้อจากไฟล์ประวัติของวันนี้
+        history_data = load_lotto_history(group_id)
         winners = {}  # คำสั่งเก็บผู้ถูกรางวัลสำหรับแต่ละหมายเลข
         all_numbers = []  # รายการเก็บหมายเลขทั้งหมดที่จะใช้ในการสุ่ม
         raffle_results = []  # รายการเก็บผลรางวัลทั้งหมด
@@ -394,14 +416,19 @@ async def raffle():
         last_two_digits = "".join([str(random.randint(0, 9)) for _ in range(2)])
         all_numbers.append(last_two_digits)
 
-        # เลือกผู้ถูกรางวัลโดยมีโอกาส 10% สำหรับแต่ละผู้ใช้
-        for user_id, data in user_data.items():
-            if random.random() < (RAFFLE_CHANCE / 100):
-                winner_number = "".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)])
-                if winner_number not in winners:
-                    winners[winner_number] = [user_id]
-                else:
-                    winners[winner_number].append(user_id)
+        # ค้นหาผู้ถูกรางวัลจากข้อมูลคำสั่งซื้อ
+        for user_id, purchases in history_data.items():
+            for purchase in purchases:
+                lottery_numbers = purchase["lottery_numbers"]
+                total_price = purchase["total_price"]
+
+                if random.random() < (RAFFLE_CHANCE / 100):
+                    # ตรวจสอบว่าหมายเลขนี้ถูกรางวัลหรือไม่
+                    if lottery_numbers in all_numbers:
+                        if lottery_numbers not in winners:
+                            winners[lottery_numbers] = [user_id]
+                        else:
+                            winners[lottery_numbers].append(user_id)
 
         # ตรวจสอบว่าใครถูกรางวัลบ้าง
         for i, number in enumerate(all_numbers):
@@ -429,6 +456,8 @@ async def raffle():
 
                 # เพิ่มยอดเงินให้กับผู้ถูกรางวัล
                 for user_id in winners[number]:
+                    # เพิ่มยอดเงินในบัญชีผู้ชนะ
+                    user_data = load_data(group_id)
                     if user_id in user_data:
                         user_data[user_id]["balance"] += prize_amount
                         save_data(user_data, group_id)
@@ -464,60 +493,4 @@ async def on_message(message):
         group_id = message.guild.id  # ดึง ID ของกลุ่ม
 
         embed = discord.Embed(
-            title="ล็อตเตอรี่",
-            description=f"ราคาล็อตเตอรี่ 1 ใบ = {LOTTERY_PRICE} บาท\nเลือกจำนวนล็อตเตอรี่ที่ต้องการซื้อ",
-            color=discord.Color.green()
-        )
-
-        lottery_button = Button(label="ซื้อล็อตเตอรี่", style=discord.ButtonStyle.green)
-        custom_lottery_button = Button(label="ซื้อเลขเอง", style=discord.ButtonStyle.blurple)
-        lottery_3digits_button = Button(label="ซื้อเลขท้าย 3 ตัว", style=discord.ButtonStyle.primary)
-        last_two_button = Button(label="ซื้อเลขท้าย 2 ตัว", style=discord.ButtonStyle.primary)
-        check_lotto_button = Button(label="ตรวจสอบล็อตเตอรี่ที่มี", style=discord.ButtonStyle.blurple)
-
-        # ปุ่มซื้อเลขเอง
-        async def custom_lottery_button_callback(interaction: discord.Interaction):
-            modal = CustomLotteryModal(group_id)
-            await interaction.response.send_modal(modal)
-
-        custom_lottery_button.callback = custom_lottery_button_callback
-
-        # ซื้อเลขทั่วไป
-        async def lottery_button_callback(interaction: discord.Interaction):
-            modal = LotteryModal(group_id)
-            await interaction.response.send_modal(modal)
-
-        lottery_button.callback = lottery_button_callback
-
-        # เลขท้าย 3 ตัว
-        async def lottery_3digits_button_callback(interaction: discord.Interaction):
-            modal = Lottery3DigitsModal(group_id)
-            await interaction.response.send_modal(modal)
-
-        lottery_3digits_button.callback = lottery_3digits_button_callback
-
-        # เลขท้าย 2 ตัว
-        async def last_two_button_callback(interaction: discord.Interaction):
-            modal = LottoLastTwoModal(group_id)
-            await interaction.response.send_modal(modal)
-
-        last_two_button.callback = last_two_button_callback
-
-        # ดูประวัติ
-        async def check_lotto_button_callback(interaction: discord.Interaction):
-            # ใช้ interaction.user.id แทน user_id ที่ประกาศใน on_message
-            await check_lotto_history(interaction, group_id, str(interaction.user.id))
-
-        check_lotto_button.callback = check_lotto_button_callback
-
-        view = View()
-        view.add_item(lottery_button)
-        view.add_item(custom_lottery_button)
-        view.add_item(lottery_3digits_button)
-        view.add_item(last_two_button)
-        view.add_item(check_lotto_button)
-
-        await message.channel.send(embed=embed, view=view)
-
-# Run the bot
-client.run("YOUR_DISCORD_BOT_TOKEN")
+           
