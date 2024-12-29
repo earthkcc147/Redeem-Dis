@@ -240,7 +240,7 @@ class LottoLastTwoModal(Modal):
             placeholder="กรอกเลขท้าย 2 ตัว",
             required=True,
             min_length=2,
-            max_length=2,
+            max_length=2
         )
         self.add_item(self.number_input)
 
