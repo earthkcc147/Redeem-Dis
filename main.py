@@ -480,6 +480,9 @@ class AdminPanelButton(Button):
 async def on_message(message):
     if message.content.lower() == "!เติมเงิน":
         group_id = message.guild.id  # ดึง ID ของกลุ่ม
+        user_id = str(message.author.id)  # ดึง ID ของผู้ใช้
+        # โหลดข้อมูลผู้ใช้
+        user_data = load_data(group_id)
 
         embed = discord.Embed(
             title="เติมเงิน TrueMoney",
@@ -487,38 +490,45 @@ async def on_message(message):
             color=discord.Color.blue()
         )
         
-        # สร้างปุ่มต่างๆ
-        button_recharge = Button(label="เติมเงิน", style=discord.ButtonStyle.green)
-        check_balance_button = CheckBalanceButton(group_id)
-        redeem_code_button = RedeemCodeButton(group_id)
-        register_button = RegisterButton(group_id)  # ปุ่มลงทะเบียน
-
-        # check_history_button = CheckHistoryButton(phone_number="0841304874")  # เปลี่ยนเบอร์ตามต้องการ
-        # add_key_button = AddKeyButton(group_id)  # เพิ่มปุ่มเพิ่มคีย์
-        # show_keys_button = ShowKeysButton(group_id)  # ปุ่มใหม่เพื่อแสดงคีย์ทั้งหมด
-
-        async def button_callback(interaction: discord.Interaction):
-            modal = GiftLinkModal(group_id)
-            await interaction.response.send_modal(modal)
-
-        button_recharge.callback = button_callback
-
         view = View()
-        view.add_item(button_recharge)
-        view.add_item(check_balance_button)
-        view.add_item(redeem_code_button)
-        view.add_item(register_button)  # เพิ่มปุ่มลงทะเบียนใน view
-        
-        if message.author.id in ADMIN_IDS:
-            # view.add_item(check_history_button) # เพิ่มปุ่มเช็คคีย์
-            # view.add_item(add_key_button)  # เพิ่มปุ่มเพิ่มคีย์
-            # view.add_item(show_keys_button)  # เพิ่มปุ่มนี้ใน view
-            
-            # เพิ่มปุ่ม "Admin Panel" สำหรับแอดมิน
-            admin_panel_button = AdminPanelButton()
-            view.add_item(admin_panel_button)
 
-        await message.channel.send(embed=embed, view=view)
+        # ตรวจสอบว่าผู้ใช้มีข้อมูลในไฟล์หรือไม่
+        if user_id not in user_data:
+            # ถ้ายังไม่มีข้อมูลผู้ใช้ ให้แสดงปุ่ม "ลงทะเบียน"
+            register_button = RegisterButton(group_id)
+            view.add_item(register_button)
+        else:
+            # ถ้ามีข้อมูลผู้ใช้แล้ว ให้แสดงปุ่ม "เติมเงิน" และปุ่มอื่นๆ
+            button_recharge = Button(label="เติมเงิน", style=discord.ButtonStyle.green)
+            check_balance_button = CheckBalanceButton(group_id)
+            redeem_code_button = RedeemCodeButton(group_id)
+        
+            # check_history_button = CheckHistoryButton(phone_number="0841304874")  # เปลี่ยนเบอร์ตามต้องการ
+            # add_key_button = AddKeyButton(group_id)  # เพิ่มปุ่มเพิ่มคีย์
+            # show_keys_button = ShowKeysButton(group_id)  # ปุ่มใหม่เพื่อแสดงคีย์ทั้งหมด
+
+            async def button_callback(interaction: discord.Interaction):
+                modal = GiftLinkModal(group_id)
+                await interaction.response.send_modal(modal)
+
+            button_recharge.callback = button_callback
+
+            view = View()
+            view.add_item(button_recharge)
+            view.add_item(check_balance_button)
+            view.add_item(redeem_code_button)
+        
+        
+            if message.author.id in ADMIN_IDS:
+                # view.add_item(check_history_button) # เพิ่มปุ่มเช็คคีย์
+                # view.add_item(add_key_button)  # เพิ่มปุ่มเพิ่มคีย์
+                # view.add_item(show_keys_button)  # เพิ่มปุ่มนี้ใน view
+            
+                # เพิ่มปุ่ม "Admin Panel" สำหรับแอดมิน
+                admin_panel_button = AdminPanelButton()
+                view.add_item(admin_panel_button)
+
+            await message.channel.send(embed=embed, view=view)
         
         
 client.run(TOKEN)
