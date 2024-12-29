@@ -30,7 +30,7 @@ def save_lotto_data(data, group_id):
     folder_path = "data"
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    
+
     file_path = f"{folder_path}/lotto{group_id}.json"
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -58,7 +58,7 @@ def save_balance_data(data, group_id):
     folder_path = "topup"
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    
+
     data_file = os.path.join(folder_path, f"{group_id}.json")
     with open(data_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -99,7 +99,6 @@ class LottoModal(Modal):
             # สร้างข้อความยืนยันการซื้อ
             confirmation_message = f"คุณต้องการซื้อล็อตเตอรี่ {amount} ใบ\n" \
                                    f"ราคาทั้งหมด: {total_price} บาท\n" \
-                                   # f"หมายเลขล็อตเตอรี่ที่จะได้: " + ", ".join([str(generate_lotto_number()) for _ in range(amount)]) + "\n\n" \
                                    f"กรุณายืนยันการซื้อ"
 
             # สร้างปุ่มยืนยัน
