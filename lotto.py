@@ -160,11 +160,7 @@ class LotteryButton(Button):
         # เปิด Modal เมื่อกดปุ่ม
         modal = LottoModal(group_id=interaction.guild.id)
 
-        # สร้าง view ที่มีปุ่ม
-        view = View()
-        view.add_item(modal)  # ไม่จำเป็นต้องมีปุ่มในกรณีนี้ แต่ต้องมีการใช้ View
-
-        # ส่ง Modal ผ่าน View
+        # ส่ง Modal ผ่าน response
         await interaction.response.send_modal(modal)
 
 # คำสั่ง !lottery ที่จะส่ง Embed พร้อมปุ่มซื้อล็อตเตอรี่
