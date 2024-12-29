@@ -189,6 +189,7 @@ class CustomLotteryModal(Modal):
 
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
+
 class Lottery3DigitsModal(Modal):
     def __init__(self, group_id):
         super().__init__(title="ซื้อล็อตเตอรี่ (เลขท้าย 3 ตัว)")
@@ -227,6 +228,67 @@ class Lottery3DigitsModal(Modal):
 
         # ส่งข้อความยืนยัน
         await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่หมายเลข {number} เลขท้าย 3 ตัว\nยอดเงินที่ถูกหัก: {LOTTERY_PRICE} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
+
+
+class LottoLastTwoModal(Modal):
+    def __init__(self, group_id):
+        super().__init__(title="ซื้อเลขท้าย 2 ตัว")
+        self.group_id = group_id
+
+        self.number_input = TextInput(
+            label="กรอกเลขท้าย 2 ตัวที่ต้องการซื้อ (0-99)",
+            placeholder="กรอกเลขท้าย 2 ตัว",
+            required=True,
+            min_length=2,
+            max_length=2,
+            placeholder="เช่น 12"
+        )
+        self.add_item(self.number_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        last_two_number = self.number_input.value.strip()
+        user_id = str(interaction.user.id)
+
+        if not last_two_number.isdigit() or len(last_two_number) != 2:
+            await interaction.response.send_message("กรุณากรอกเลขท้าย 2 ตัวที่ถูกต้อง (0-99)", ephemeral=True)
+            return
+
+        user_data = load_data(self.group_id)
+        user_balance = user_data.get(user_id, {}).get("balance", 0)
+        total_price = LOTTERY_PRICE  # ราคาคงที่สำหรับการซื้อเลขท้าย 2 ตัว
+
+        if user_balance < total_price:
+            await interaction.response.send_message("คุณไม่มียอดเงินเพียงพอในการซื้อเลขท้าย 2 ตัว", ephemeral=True)
+            return
+
+        embed = discord.Embed(
+            title="ยืนยันการซื้อเลขท้าย 2 ตัว",
+            description=f"คุณต้องการซื้อเลขท้าย 2 ตัว: {last_two_number} ด้วยราคา {total_price} บาท\nยอดเงินคงเหลือ: {user_balance - total_price} บาท",
+            color=discord.Color.green()
+        )
+
+        confirm_button = Button(label="ตกลง", style=discord.ButtonStyle.green)
+        cancel_button = Button(label="ยกเลิก", style=discord.ButtonStyle.red)
+
+        async def confirm_button_callback(interaction: discord.Interaction):
+            user_data[user_id]["balance"] -= total_price
+            save_data(user_data, self.group_id)
+            save_lotto_history(self.group_id, user_id, [last_two_number], total_price)
+
+            await interaction.response.send_message(f"คุณได้ซื้อเลขท้าย 2 ตัว: {last_two_number} ด้วยราคา {total_price} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
+
+        async def cancel_button_callback(interaction: discord.Interaction):
+            await interaction.response.send_message("ยกเลิกการซื้อเลขท้าย 2 ตัว", ephemeral=True)
+
+        confirm_button.callback = confirm_button_callback
+        cancel_button.callback = cancel_button_callback
+
+        view = View()
+        view.add_item(confirm_button)
+        view.add_item(cancel_button)
+
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
 
 # สร้างฟังก์ชันสุ่มรางวัล
 @tasks.loop(minutes=RAFFLE_INTERVAL)
@@ -307,6 +369,7 @@ async def on_message(message):
         lottery_button = Button(label="ซื้อล็อตเตอรี่", style=discord.ButtonStyle.green)
         custom_lottery_button = Button(label="ซื้อเลขเอง", style=discord.ButtonStyle.blurple)
         lottery_3digits_button = Button(label="ซื้อเลขท้าย 3 ตัว", style=discord.ButtonStyle.blue)
+        last_two_button = Button(label="ซื้อเลขท้าย 2 ตัว", style=discord.ButtonStyle.blue)
         
         # ปุ่มซื้อเลขเอง
         async def custom_lottery_button_callback(interaction: discord.Interaction):
@@ -326,11 +389,21 @@ async def on_message(message):
         async def lottery_3digits_button_callback(interaction: discord.Interaction):
             modal = Lottery3DigitsModal(group_id)
             await interaction.response.send_modal(modal)
+        
+        lottery_3digits_button.callback = lottery_3digits_button_callback
+
+        # เลขท้าย 2 ตัว
+        async def last_two_button_callback(interaction: discord.Interaction):
+            modal = LottoLastTwoModal(group_id)
+            await interaction.response.send_modal(modal)
+
+        last_two_button.callback = last_two_button_callback
 
         view = View()
         view.add_item(lottery_button)
         view.add_item(custom_lottery_button)
         view.add_item(lottery_3digits_button)
+        view.add_item(last_two_button)
 
         await message.channel.send(embed=embed, view=view)
 
