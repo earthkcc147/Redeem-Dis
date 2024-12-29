@@ -481,6 +481,7 @@ async def on_message(message):
     if message.content.lower() == "!เติมเงิน":
         group_id = message.guild.id  # ดึง ID ของกลุ่ม
         user_id = str(message.author.id)  # ดึง ID ของผู้ใช้
+
         # โหลดข้อมูลผู้ใช้
         user_data = load_data(group_id)
 
@@ -489,7 +490,7 @@ async def on_message(message):
             description="เลือกการดำเนินการที่ต้องการ",
             color=discord.Color.blue()
         )
-        
+
         view = View()
 
         # ตรวจสอบว่าผู้ใช้มีข้อมูลในไฟล์หรือไม่
@@ -502,10 +503,6 @@ async def on_message(message):
             button_recharge = Button(label="เติมเงิน", style=discord.ButtonStyle.green)
             check_balance_button = CheckBalanceButton(group_id)
             redeem_code_button = RedeemCodeButton(group_id)
-        
-            # check_history_button = CheckHistoryButton(phone_number="0841304874")  # เปลี่ยนเบอร์ตามต้องการ
-            # add_key_button = AddKeyButton(group_id)  # เพิ่มปุ่มเพิ่มคีย์
-            # show_keys_button = ShowKeysButton(group_id)  # ปุ่มใหม่เพื่อแสดงคีย์ทั้งหมด
 
             async def button_callback(interaction: discord.Interaction):
                 modal = GiftLinkModal(group_id)
@@ -513,22 +510,18 @@ async def on_message(message):
 
             button_recharge.callback = button_callback
 
-            view = View()
+            # เพิ่มปุ่มลงใน view
             view.add_item(button_recharge)
             view.add_item(check_balance_button)
             view.add_item(redeem_code_button)
-        
-        
-            if message.author.id in ADMIN_IDS:
-                # view.add_item(check_history_button) # เพิ่มปุ่มเช็คคีย์
-                # view.add_item(add_key_button)  # เพิ่มปุ่มเพิ่มคีย์
-                # view.add_item(show_keys_button)  # เพิ่มปุ่มนี้ใน view
-            
-                # เพิ่มปุ่ม "Admin Panel" สำหรับแอดมิน
-                admin_panel_button = AdminPanelButton()
-                view.add_item(admin_panel_button)
 
-            await message.channel.send(embed=embed, view=view)
+        # เพิ่มปุ่ม "Admin Panel" สำหรับแอดมิน
+        if message.author.id in ADMIN_IDS:
+            admin_panel_button = AdminPanelButton()
+            view.add_item(admin_panel_button)
+
+        # ส่งข้อความพร้อมปุ่ม
+        await message.channel.send(embed=embed, view=view)
         
         
 client.run(TOKEN)
