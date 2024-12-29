@@ -356,7 +356,7 @@ class LottoLastTwoModal(Modal):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
-# ฟังก์ชันอ่านข้อมูลการซื้อของผู้ใช้จากไฟล์
+# ฟังก์ชันอ่านข้อมูลการซื้อของผู้ใช้จากไฟล์ (เฉพาะคำสั่งซื้อในวันนี้)
 def load_lotto_history(group_id):
     folder_path = LOTTO_HISTORY_FOLDER_PATH
     history_file = os.path.join(folder_path, f"lotto{group_id}.json")
@@ -365,7 +365,16 @@ def load_lotto_history(group_id):
         return {}
 
     with open(history_file, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        history_data = json.load(f)
+
+    # ฟังก์ชันกรองคำสั่งซื้อที่เกิดขึ้นในวันนี้
+    today = datetime.now().strftime('%Y-%m-%d')
+    filtered_history = {}
+
+    for user_id, purchases in history_data.items():
+        filtered_history[user_id] = [purchase for purchase in purchases if purchase['date'].startswith(today)]
+    
+    return filtered_history
 
 # ฟังก์ชันสุ่มรางวัล
 @tasks.loop(minutes=RAFFLE_INTERVAL)
@@ -373,7 +382,7 @@ async def raffle():
     for guild in client.guilds:
         group_id = guild.id
 
-        # โหลดข้อมูลคำสั่งซื้อจากไฟล์ประวัติ
+        # โหลดข้อมูลคำสั่งซื้อจากไฟล์ประวัติของวันนี้
         history_data = load_lotto_history(group_id)
         winners = {}  # คำสั่งเก็บผู้ถูกรางวัลสำหรับแต่ละหมายเลข
         all_numbers = []  # รายการเก็บหมายเลขทั้งหมดที่จะใช้ในการสุ่ม
