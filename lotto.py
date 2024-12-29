@@ -136,6 +136,9 @@ async def raffle():
         all_numbers = []  # รายการเก็บหมายเลขทั้งหมดที่จะใช้ในการสุ่ม
         raffle_results = []  # รายการเก็บผลรางวัลทั้งหมด
 
+        # กำหนดจำนวนรางวัลที่แต่ละหมายเลขจะได้รับ
+        prize_amounts = [1000, 500, 300, 100, 50]  # รางวัลสำหรับ 5 รางวัลแรก
+
         # สร้างหมายเลขทั้งหมดที่เป็นไปได้สำหรับการสุ่ม
         for i in range(1, 6):  # กำหนดจำนวนรางวัลที่ต้องการ (เช่น 5 รางวัล)
             all_numbers.append("".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)]))
@@ -154,10 +157,18 @@ async def raffle():
             # หากมีผู้ถูกรางวัลให้แสดงข้อมูลผู้ถูกรางวัล
             if number in winners:
                 winner_mentions = " ".join([f"<@{user_id}>" for user_id in winners[number]])
-                raffle_results.append(f"รางวัล {i + 1}: {winner_mentions} - หมายเลข: {number}")
+                prize_amount = prize_amounts[i]  # กำหนดรางวัลตามลำดับ
+                raffle_results.append(f"รางวัลที่ {i + 1}: {winner_mentions} - หมายเลข: {number} - รับเงิน {prize_amount} บาท")
+                
+                # เพิ่มยอดเงินให้กับผู้ถูกรางวัล
+                for user_id in winners[number]:
+                    if user_id in user_data:
+                        user_data[user_id]["balance"] += prize_amount
+                        save_data(user_data, group_id)
+
             else:
                 # หากไม่มีผู้ถูกรางวัล
-                raffle_results.append(f"รางวัล {i + 1}: ไม่มีผู้ที่ถูกรางวัล - หมายเลข: {number}")
+                raffle_results.append(f"รางวัลที่ {i + 1}: ไม่มีผู้ที่ถูกรางวัล - หมายเลข: {number}")
 
         # สร้าง Embed เพื่อประกาศผลรางวัล
         embed = discord.Embed(
