@@ -1,4 +1,4 @@
-ๆชimport discord
+import discord
 from discord.ui import Button, View, Modal, TextInput
 import requests
 import json
