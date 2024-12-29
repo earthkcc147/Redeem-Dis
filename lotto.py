@@ -24,7 +24,6 @@ prize_2 = 500    # รางวัล 500 บาท
 prize_3 = 300    # รางวัล 300 บาท
 prize_4 = 100    # รางวัล 100 บาท
 prize_5 = 50      # รางวัล 50 บาท
-
 RAFFLE_3DIGIT_PRIZE = 2000  # รางวัลเลขท้าย 3 ตัว
 RAFFLE_2DIGIT_PRIZE = 3000  # รางวัลเลขท้าย 2 ตัว
 
@@ -330,11 +329,19 @@ async def raffle():
 
         # ตรวจสอบว่าใครถูกรางวัลบ้าง
         for i, number in enumerate(all_numbers):
+            # กำหนดประเภทของรางวัลที่จะแสดง
+            if i < 5:
+                prize_type = f"รางวัลที่ {i + 1}: "
+            elif i < 7:
+                prize_type = f"รางวัลเลขท้าย 3 ตัว {i - 4}: "
+            else:
+                prize_type = f"รางวัลเลขท้าย 2 ตัว: "
+                
             # หากมีผู้ถูกรางวัลให้แสดงข้อมูลผู้ถูกรางวัล
             if number in winners:
                 winner_mentions = " ".join([f"<@{user_id}>" for user_id in winners[number]])
                 prize_amount = prize_amounts[i] if i < len(prize_amounts) else RAFFLE_3DIGIT_PRIZE if len(all_numbers) - i <= 3 else RAFFLE_2DIGIT_PRIZE
-                raffle_results.append(f"รางวัลที่ {i + 1}: {winner_mentions} - หมายเลข: {number} - รับเงิน {prize_amount} บาท")
+                raffle_results.append(f"{prize_type}{winner_mentions} - หมายเลข: {number} - รับเงิน {prize_amount} บาท")
 
                 # เพิ่มยอดเงินให้กับผู้ถูกรางวัล
                 for user_id in winners[number]:
@@ -344,7 +351,7 @@ async def raffle():
 
             else:
                 # หากไม่มีผู้ถูกรางวัล
-                raffle_results.append(f"รางวัลที่ {i + 1}: ไม่มีผู้ที่ถูกรางวัล - หมายเลข: {number}")
+                raffle_results.append(f"{prize_type}ไม่มีผู้ที่ถูกรางวัล - หมายเลข: {number}")
 
         # สร้าง Embed เพื่อประกาศผลรางวัล
         embed = discord.Embed(
