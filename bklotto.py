@@ -25,6 +25,9 @@ prize_3 = 300    # รางวัล 300 บาท
 prize_4 = 100    # รางวัล 100 บาท
 prize_5 = 50      # รางวัล 50 บาท
 
+RAFFLE_3DIGIT_PRIZE = 2000  # รางวัลเลขท้าย 3 ตัว
+RAFFLE_2DIGIT_PRIZE = 3000  # รางวัลเลขท้าย 2 ตัว
+
 # ฟังก์ชันเพื่ออ่านข้อมูลจากไฟล์ JSON
 def load_data(group_id):
     folder_path = TOPUP_FOLDER_PATH
@@ -190,7 +193,106 @@ class CustomLotteryModal(Modal):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
-# สร้างฟังก์ชันสุ่มรางวัล
+class Lottery3DigitsModal(Modal):
+    def __init__(self, group_id):
+        super().__init__(title="ซื้อล็อตเตอรี่ (เลขท้าย 3 ตัว)")
+        self.group_id = group_id
+
+        self.number_input = TextInput(
+            label="กรุณากรอกเลขท้าย 3 ตัว",
+            placeholder="กรอกเลขที่ต้องการซื้อ",
+            required=True,
+            min_length=3,
+            max_length=3
+        )
+        self.add_item(self.number_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        user_id = str(interaction.user.id)
+        number = self.number_input.value  # เลขที่ผู้ใช้กรอก
+
+        if not number.isdigit() or len(number) != 3:
+            await interaction.response.send_message("กรุณากรอกเลขที่มี 3 หลักเท่านั้น", ephemeral=True)
+            return
+
+        user_data = load_data(self.group_id)
+        user_balance = user_data.get(user_id, {}).get("balance", 0)
+
+        if user_balance < LOTTERY_PRICE:
+            await interaction.response.send_message("คุณไม่มียอดเงินเพียงพอในการซื้อล็อตเตอรี่", ephemeral=True)
+            return
+
+        # หักยอดเงินและบันทึกข้อมูล
+        user_data[user_id]["balance"] -= LOTTERY_PRICE
+        save_data(user_data, self.group_id)
+
+        # บันทึกประวัติการซื้อล็อตเตอรี่
+        save_lotto_history(self.group_id, user_id, [number], LOTTERY_PRICE)
+
+        # ส่งข้อความยืนยัน
+        await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่หมายเลข {number} เลขท้าย 3 ตัว\nยอดเงินที่ถูกหัก: {LOTTERY_PRICE} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
+
+
+class LottoLastTwoModal(Modal):
+    def __init__(self, group_id):
+        super().__init__(title="ซื้อเลขท้าย 2 ตัว")
+        self.group_id = group_id
+
+        self.number_input = TextInput(
+            label="กรอกเลขท้าย 2 ตัวที่ต้องการซื้อ (0-99)",
+            placeholder="กรอกเลขท้าย 2 ตัว",
+            required=True,
+            min_length=2,
+            max_length=2
+        )
+        self.add_item(self.number_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        last_two_number = self.number_input.value.strip()
+        user_id = str(interaction.user.id)
+
+        if not last_two_number.isdigit() or len(last_two_number) != 2:
+            await interaction.response.send_message("กรุณากรอกเลขท้าย 2 ตัวที่ถูกต้อง (0-99)", ephemeral=True)
+            return
+
+        user_data = load_data(self.group_id)
+        user_balance = user_data.get(user_id, {}).get("balance", 0)
+        total_price = LOTTERY_PRICE  # ราคาคงที่สำหรับการซื้อเลขท้าย 2 ตัว
+
+        if user_balance < total_price:
+            await interaction.response.send_message("คุณไม่มียอดเงินเพียงพอในการซื้อเลขท้าย 2 ตัว", ephemeral=True)
+            return
+
+        embed = discord.Embed(
+            title="ยืนยันการซื้อเลขท้าย 2 ตัว",
+            description=f"คุณต้องการซื้อเลขท้าย 2 ตัว: {last_two_number} ด้วยราคา {total_price} บาท\nยอดเงินคงเหลือ: {user_balance - total_price} บาท",
+            color=discord.Color.green()
+        )
+
+        confirm_button = Button(label="ตกลง", style=discord.ButtonStyle.green)
+        cancel_button = Button(label="ยกเลิก", style=discord.ButtonStyle.red)
+
+        async def confirm_button_callback(interaction: discord.Interaction):
+            user_data[user_id]["balance"] -= total_price
+            save_data(user_data, self.group_id)
+            save_lotto_history(self.group_id, user_id, [last_two_number], total_price)
+
+            await interaction.response.send_message(f"คุณได้ซื้อเลขท้าย 2 ตัว: {last_two_number} ด้วยราคา {total_price} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
+
+        async def cancel_button_callback(interaction: discord.Interaction):
+            await interaction.response.send_message("ยกเลิกการซื้อเลขท้าย 2 ตัว", ephemeral=True)
+
+        confirm_button.callback = confirm_button_callback
+        cancel_button.callback = cancel_button_callback
+
+        view = View()
+        view.add_item(confirm_button)
+        view.add_item(cancel_button)
+
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+
+# ฟังก์ชันสุ่มรางวัลที่ปรับปรุงแล้ว
 @tasks.loop(minutes=RAFFLE_INTERVAL)
 async def raffle():
     for guild in client.guilds:
@@ -208,6 +310,15 @@ async def raffle():
         for i in range(1, 6):  # กำหนดจำนวนรางวัลที่ต้องการ (เช่น 5 รางวัล)
             all_numbers.append("".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)]))
 
+        # เพิ่มหมายเลขสำหรับรางวัลเลขท้าย 3 ตัว (2 รางวัล)
+        for _ in range(2):
+            last_three_digits = "".join([str(random.randint(0, 9)) for _ in range(3)])
+            all_numbers.append(last_three_digits)
+
+        # เพิ่มหมายเลขสำหรับรางวัลเลขท้าย 2 ตัว (1 รางวัล)
+        last_two_digits = "".join([str(random.randint(0, 9)) for _ in range(2)])
+        all_numbers.append(last_two_digits)
+
         # เลือกผู้ถูกรางวัลโดยมีโอกาส 10% สำหรับแต่ละผู้ใช้
         for user_id, data in user_data.items():
             if random.random() < (RAFFLE_CHANCE / 100):
@@ -222,7 +333,7 @@ async def raffle():
             # หากมีผู้ถูกรางวัลให้แสดงข้อมูลผู้ถูกรางวัล
             if number in winners:
                 winner_mentions = " ".join([f"<@{user_id}>" for user_id in winners[number]])
-                prize_amount = prize_amounts[i]  # กำหนดรางวัลตามลำดับ
+                prize_amount = prize_amounts[i] if i < len(prize_amounts) else RAFFLE_3DIGIT_PRIZE if len(all_numbers) - i <= 3 else RAFFLE_2DIGIT_PRIZE
                 raffle_results.append(f"รางวัลที่ {i + 1}: {winner_mentions} - หมายเลข: {number} - รับเงิน {prize_amount} บาท")
 
                 # เพิ่มยอดเงินให้กับผู้ถูกรางวัล
@@ -247,6 +358,7 @@ async def raffle():
         if channel:
             await channel.send(embed=embed)
 
+
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
@@ -268,6 +380,8 @@ async def on_message(message):
 
         lottery_button = Button(label="ซื้อล็อตเตอรี่", style=discord.ButtonStyle.green)
         custom_lottery_button = Button(label="ซื้อเลขเอง", style=discord.ButtonStyle.blurple)
+        lottery_3digits_button = Button(label="ซื้อเลขท้าย 3 ตัว", style=discord.ButtonStyle.primary)
+        last_two_button = Button(label="ซื้อเลขท้าย 2 ตัว", style=discord.ButtonStyle.primary)
 
         # ปุ่มซื้อเลขเอง
         async def custom_lottery_button_callback(interaction: discord.Interaction):
@@ -283,9 +397,25 @@ async def on_message(message):
 
         lottery_button.callback = lottery_button_callback
 
+        # เลขท้าย 3 ตัว
+        async def lottery_3digits_button_callback(interaction: discord.Interaction):
+            modal = Lottery3DigitsModal(group_id)
+            await interaction.response.send_modal(modal)
+
+        lottery_3digits_button.callback = lottery_3digits_button_callback
+
+        # เลขท้าย 2 ตัว
+        async def last_two_button_callback(interaction: discord.Interaction):
+            modal = LottoLastTwoModal(group_id)
+            await interaction.response.send_modal(modal)
+
+        last_two_button.callback = last_two_button_callback
+
         view = View()
         view.add_item(lottery_button)
         view.add_item(custom_lottery_button)
+        view.add_item(lottery_3digits_button)
+        view.add_item(last_two_button)
 
         await message.channel.send(embed=embed, view=view)
 
