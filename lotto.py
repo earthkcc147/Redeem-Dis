@@ -241,7 +241,6 @@ class LottoLastTwoModal(Modal):
             required=True,
             min_length=2,
             max_length=2,
-            placeholder="เช่น 12"
         )
         self.add_item(self.number_input)
 
