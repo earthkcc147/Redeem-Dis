@@ -485,7 +485,8 @@ async def on_message(message):
 
         # ดูประวัติ
         async def check_lotto_button_callback(interaction: discord.Interaction):
-            await check_lotto_history(interaction, group_id, user_id)
+            # ใช้ interaction.user.id แทน user_id ที่ประกาศใน on_message
+            await check_lotto_history(interaction, group_id, str(interaction.user.id))
 
         check_lotto_button.callback = check_lotto_button_callback
 
