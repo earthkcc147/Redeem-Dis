@@ -44,19 +44,19 @@ async def on_ready():
 def load_data(group_id):
     folder_path = "topup"
     data_file = os.path.join(folder_path, f"{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
-    
+
     # ถ้าไฟล์ไม่พบ ให้สร้างไฟล์ใหม่และคืนค่าข้อมูลเริ่มต้น
     if not os.path.exists(data_file):
         # สร้างโฟลเดอร์ "topup" ถ้ายังไม่มี
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-        
+
         # สร้างไฟล์ JSON ใหม่ด้วยข้อมูลเริ่มต้น
         default_data = {}
         with open(data_file, 'w', encoding='utf-8') as f:
             json.dump(default_data, f, ensure_ascii=False, indent=4)
         return default_data
-    
+
     # ถ้าไฟล์มีอยู่แล้วให้โหลดข้อมูลจากไฟล์
     with open(data_file, 'r', encoding='utf-8') as f:
         return json.load(f)
@@ -93,10 +93,10 @@ class GiftLinkModal(Modal):
             "gift_link": gift_link,
             "phone": phone
         }
-        
+
         response = requests.post(api_url, data=data)
         result = response.json()
-        
+
         # ตรวจสอบผลลัพธ์จาก API
         if result["status"] == "success":
             message = f"สำเร็จ! จำนวนเงิน: {result['amount']} บาท\nเบอร์รับเงิน: {result['phone']}\nลิ้งซองของขวัญ: {result['gift_link']}\nเวลาทำรายการ: {result['time']}"
@@ -141,7 +141,7 @@ class GiftLinkModal(Modal):
 
         # ส่งข้อความตอบกลับในช่องที่กดคำสั่ง
         await interaction.response.send_message(message, ephemeral=True)
-        
+
 
 class CheckBalanceButton(Button):
     def __init__(self, group_id):
@@ -171,7 +171,7 @@ class CheckHistoryButton(Button):
         if interaction.user.id not in ADMIN_IDS:
             await interaction.response.send_message("คุณไม่มีสิทธิ์ในการดูประวัติการทำรายการ", ephemeral=True)
             return
-        
+
         api_url = f"https://byshop.me/api/history_truewallet?phone={self.phone_number}"
         response = requests.get(api_url)
         history = response.json()
@@ -267,7 +267,7 @@ class RedeemCodeButton(Button):
     async def callback(self, interaction: discord.Interaction):
         modal = RedeemCodeModal(self.group_id)
         await interaction.response.send_modal(modal)
-        
+
 
 class AddKeyModal(Modal):
     def __init__(self, group_id):
@@ -297,7 +297,7 @@ class AddKeyModal(Modal):
             keys_data = {}
             with open(keys_file, 'w', encoding='utf-8') as f:
                 json.dump(keys_data, f, ensure_ascii=False, indent=4)
-        
+
         # โหลดข้อมูลจาก keys.json
         with open(keys_file, 'r', encoding='utf-8') as f:
             keys_data = json.load(f)
@@ -333,8 +333,8 @@ class AddKeyButton(Button):
 
         modal = AddKeyModal(self.group_id)
         await interaction.response.send_modal(modal)
-        
-        
+
+
 class ShowKeysButton(Button):
     def __init__(self, group_id):
         super().__init__(label="แสดงคีย์ทั้งหมด", style=discord.ButtonStyle.primary)
@@ -368,11 +368,11 @@ class ShowKeysButton(Button):
             f"โค้ด: {key}, จำนวนเงิน: {data['amount']} บาท, คีย์ที่เหลือ: {data['remaining']}" 
             for key, data in keys_data.items()
         ])
-        
+
         # ส่งข้อความแสดงคีย์ทั้งหมด
         await interaction.response.send_message(f"คีย์ทั้งหมดในระบบ:\n{keys_list}", ephemeral=True)
-        
-        
+
+
 class DeleteKeyModal(Modal):
     def __init__(self, group_id):
         super().__init__(title="ลบโค้ด")
@@ -445,7 +445,7 @@ class RegisterButton(Button):
             user_data[user_id] = {"balance": 0.0, "history": []}  # เพิ่มข้อมูลผู้ใช้ใหม่
             save_data(user_data, self.group_id)  # บันทึกข้อมูลลงในไฟล์
             await interaction.response.send_message("ลงทะเบียนสำเร็จ! คุณสามารถเริ่มใช้งานได้แล้ว.", ephemeral=True)
-        
+
 
 class AdminPanelButton(Button):
     def __init__(self):
@@ -456,34 +456,30 @@ class AdminPanelButton(Button):
         if interaction.user.id not in ADMIN_IDS:
             await interaction.response.send_message("คุณไม่มีสิทธิ์เข้าถึง Admin Panel นี้", ephemeral=True)
             return
-        
+
         # สร้างปุ่มที่ใช้ใน Admin Panel
         admin_view = View()
-        
+
         # เพิ่มปุ่มเฉพาะของแอดมิน เช่น ปุ่มแสดงคีย์ทั้งหมด
-        
+
         check_history_button = CheckHistoryButton(phone_number="0841304874")  # เปลี่ยนเบอร์ตามต้องการ
         show_keys_button = ShowKeysButton(group_id=None)  # ปุ่มใหม่เพื่อแสดงคีย์ทั้งหมด
         add_key_button = AddKeyButton(group_id=None)  # เพิ่มปุ่มเพิ่มคีย์
         delete_key_button = DeleteKeyButton(group_id=None)  # ปุ่มใหม่เพื่อให้แอดมินลบคีย์
-        
+
         admin_view.add_item(check_history_button) # เพิ่มปุ่มตรวจสอบประวัติ
         admin_view.add_item(show_keys_button) # เพิ่มปุ่มเช็คคีย์ทั้งหมด
         admin_view.add_item(add_key_button)  # เพิ่มปุ่มเพิ่มคีย์
         admin_view.add_item(delete_key_button)  # เพิ่มปุ่มลบคีย์
-        
+
         # ส่งข้อความพร้อมกับปุ่มใน admin view
         await interaction.response.send_message("นี่คือ Admin Panel:", view=admin_view, ephemeral=True)
-        
+
 
 @client.event
 async def on_message(message):
     if message.content.lower() == "!เติมเงิน":
         group_id = message.guild.id  # ดึง ID ของกลุ่ม
-        user_id = str(message.author.id)  # ดึง ID ของผู้ใช้
-
-        # โหลดข้อมูลผู้ใช้
-        user_data = load_data(group_id)
 
         embed = discord.Embed(
             title="เติมเงิน TrueMoney",
@@ -491,37 +487,18 @@ async def on_message(message):
             color=discord.Color.blue()
         )
 
-        view = View()
+        # สร้างปุ่มต่างๆ
+        button_recharge = Button(label="เติมเงิน", style=discord.ButtonStyle.green)
+        check_balance_button = CheckBalanceButton(group_id)
+        redeem_code_button = RedeemCodeButton(group_id)
+        register_button = RegisterButton(group_id)  # ปุ่มลงทะเบียน
 
-        # ตรวจสอบว่าผู้ใช้มีข้อมูลในไฟล์หรือไม่
-        if user_id not in user_data:
-            # ถ้ายังไม่มีข้อมูลผู้ใช้ ให้แสดงปุ่ม "ลงทะเบียน"
-            register_button = RegisterButton(group_id)
-            view.add_item(register_button)
-        else:
-            # ถ้ามีข้อมูลผู้ใช้แล้ว ให้แสดงปุ่ม "เติมเงิน" และปุ่มอื่นๆ
-            button_recharge = Button(label="เติมเงิน", style=discord.ButtonStyle.green)
-            check_balance_button = CheckBalanceButton(group_id)
-            redeem_code_button = RedeemCodeButton(group_id)
+        # check_history_button = CheckHistoryButton(phone_number="0841304874")  # เปลี่ยนเบอร์ตามต้องการ
+        # add_key_button = AddKeyButton(group_id)  # เพิ่มปุ่มเพิ่มคีย์
+        # show_keys_button = ShowKeysButton(group_id)  # ปุ่มใหม่เพื่อแสดงคีย์ทั้งหมด
 
-            async def button_callback(interaction: discord.Interaction):
-                modal = GiftLinkModal(group_id)
-                await interaction.response.send_modal(modal)
+        async def button_callback(interaction: discord.Interaction):
+            modal = GiftLinkModal(group_id)
+            await interaction.response.send_modal(modal)
 
-            button_recharge.callback = button_callback
-
-            # เพิ่มปุ่มลงใน view
-            view.add_item(button_recharge)
-            view.add_item(check_balance_button)
-            view.add_item(redeem_code_button)
-
-        # เพิ่มปุ่ม "Admin Panel" สำหรับแอดมิน
-        if message.author.id in ADMIN_IDS:
-            admin_panel_button = AdminPanelButton()
-            view.add_item(admin_panel_button)
-
-        # ส่งข้อความพร้อมปุ่ม
-        await message.channel.send(embed=embed, view=view)
-        
-        
-client.run(TOKEN)
+        button_recharge.callback = button_callback
