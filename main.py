@@ -17,7 +17,7 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 
 # ตัวแปรควบคุมการเชื่อมต่อห้องเสียง (True = เปิด, False = ปิด)
-ENABLE_VOICE_CHANNEL = True  # เปลี่ยนเป็น False เพื่อปิดการเชื่อมต่อห้องเสียง
+ENABLE_VOICE_CHANNEL = False  # เปลี่ยนเป็น False เพื่อปิดการเชื่อมต่อห้องเสียง
 
 @client.event
 async def on_ready():
