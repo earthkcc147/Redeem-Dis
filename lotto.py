@@ -174,7 +174,10 @@ async def raffle():
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
-    raffle.start()
+
+    # ตรวจสอบว่า raffle task กำลังทำงานหรือยัง
+    if not raffle.is_running():
+        raffle.start()  # เริ่ม task raffle ถ้ายังไม่ได้เริ่ม
 
 @client.event
 async def on_message(message):
