@@ -44,11 +44,22 @@ async def on_ready():
 def load_data(group_id):
     folder_path = "topup"
     data_file = os.path.join(folder_path, f"{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
-    if os.path.exists(data_file):
-        with open(data_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    else:
-        return {}
+
+    # ถ้าไฟล์ไม่พบ ให้สร้างไฟล์ใหม่และคืนค่าข้อมูลเริ่มต้น
+    if not os.path.exists(data_file):
+        # สร้างโฟลเดอร์ "topup" ถ้ายังไม่มี
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        # สร้างไฟล์ JSON ใหม่ด้วยข้อมูลเริ่มต้น
+        default_data = {}
+        with open(data_file, 'w', encoding='utf-8') as f:
+            json.dump(default_data, f, ensure_ascii=False, indent=4)
+        return default_data
+
+    # ถ้าไฟล์มีอยู่แล้วให้โหลดข้อมูลจากไฟล์
+    with open(data_file, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 # ฟังก์ชันเพื่อบันทึกข้อมูลลงในไฟล์ JSON
 def save_data(data, group_id):
@@ -60,6 +71,8 @@ def save_data(data, group_id):
     data_file = os.path.join(folder_path, f"{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
     with open(data_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+
+
 
 class GiftLinkModal(Modal):
     def __init__(self, group_id):
@@ -415,6 +428,25 @@ class DeleteKeyButton(Button):
         await interaction.response.send_modal(modal)
 
 
+class RegisterButton(Button):
+    def __init__(self, group_id):
+        super().__init__(label="ลงทะเบียน", style=discord.ButtonStyle.green)
+        self.group_id = group_id
+
+    async def callback(self, interaction: discord.Interaction):
+        user_id = str(interaction.user.id)  # ใช้ user id ของ Discord เป็น key
+        user_data = load_data(self.group_id)
+
+        # ตรวจสอบว่าผู้ใช้มีข้อมูลในไฟล์หรือไม่
+        if user_id in user_data:
+            await interaction.response.send_message("คุณได้ลงทะเบียนแล้ว!", ephemeral=True)
+        else:
+            # ถ้ายังไม่มีข้อมูล ให้ลงทะเบียนผู้ใช้ใหม่
+            user_data[user_id] = {"balance": 0.0, "history": []}  # เพิ่มข้อมูลผู้ใช้ใหม่
+            save_data(user_data, self.group_id)  # บันทึกข้อมูลลงในไฟล์
+            await interaction.response.send_message("ลงทะเบียนสำเร็จ! คุณสามารถเริ่มใช้งานได้แล้ว.", ephemeral=True)
+
+
 class AdminPanelButton(Button):
     def __init__(self):
         super().__init__(label="Admin Panel", style=discord.ButtonStyle.danger)
@@ -455,10 +487,12 @@ async def on_message(message):
             color=discord.Color.blue()
         )
 
-        # สร้างปุ่มเติมเงิน
+        # สร้างปุ่มต่างๆ
         button_recharge = Button(label="เติมเงิน", style=discord.ButtonStyle.green)
         check_balance_button = CheckBalanceButton(group_id)
         redeem_code_button = RedeemCodeButton(group_id)
+        register_button = RegisterButton(group_id)  # ปุ่มลงทะเบียน
+
         # check_history_button = CheckHistoryButton(phone_number="0841304874")  # เปลี่ยนเบอร์ตามต้องการ
         # add_key_button = AddKeyButton(group_id)  # เพิ่มปุ่มเพิ่มคีย์
         # show_keys_button = ShowKeysButton(group_id)  # ปุ่มใหม่เพื่อแสดงคีย์ทั้งหมด
@@ -469,22 +503,4 @@ async def on_message(message):
 
         button_recharge.callback = button_callback
 
-        view = View()
-        view.add_item(button_recharge)
-        view.add_item(check_balance_button)
-        view.add_item(redeem_code_button)
-
-
-        if message.author.id in ADMIN_IDS:
-            # view.add_item(check_history_button) # เพิ่มปุ่มเช็คคีย์
-            # view.add_item(add_key_button)  # เพิ่มปุ่มเพิ่มคีย์
-            # view.add_item(show_keys_button)  # เพิ่มปุ่มนี้ใน view
-
-            # เพิ่มปุ่ม "Admin Panel" สำหรับแอดมิน
-            admin_panel_button = AdminPanelButton()
-            view.add_item(admin_panel_button)
-
-        await message.channel.send(embed=embed, view=view)
-
-
-client.run(TOKEN)
+      
