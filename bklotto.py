@@ -112,17 +112,41 @@ class LotteryModal(Modal):
         for _ in range(number_of_tickets):
             lottery_numbers.append("".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)]))
 
-        # หักยอด balance
-        user_data[user_id]["balance"] -= total_price
+        # สร้าง Embed เพื่อยืนยันคำสั่งซื้อ
+        embed = discord.Embed(
+            title="ยืนยันคำสั่งซื้อ",
+            description=f"คุณต้องการซื้อ {number_of_tickets} ใบ\nหมายเลขที่สุ่มได้: {', '.join(lottery_numbers)}\nยอดเงินที่ถูกหัก: {total_price} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance'] - total_price} บาท",
+            color=discord.Color.green()
+        )
 
-        # บันทึกข้อมูลใหม่
-        save_data(user_data, self.group_id)
+        # สร้างปุ่ม "ตกลง" และ "ยกเลิก"
+        confirm_button = Button(label="ตกลง", style=discord.ButtonStyle.green)
+        cancel_button = Button(label="ยกเลิก", style=discord.ButtonStyle.red)
 
-        # บันทึกประวัติการซื้อ
-        save_lotto_history(self.group_id, user_id, lottery_numbers, total_price)
+        async def confirm_button_callback(interaction: discord.Interaction):
+            # หักยอด balance
+            user_data[user_id]["balance"] -= total_price
 
-        # แจ้งผลการสุ่มหมายเลขและหัก balance
-        await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่ {number_of_tickets} ใบ\nหมายเลขที่สุ่มได้: {', '.join(lottery_numbers)}\nยอดเงินที่ถูกหัก: {total_price} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
+            # บันทึกข้อมูลใหม่
+            save_data(user_data, self.group_id)
+
+            # บันทึกประวัติการซื้อ
+            save_lotto_history(self.group_id, user_id, lottery_numbers, total_price)
+
+            # แจ้งผลการสุ่มหมายเลขและหัก balance
+            await interaction.response.send_message(f"คุณได้ซื้อล็อตเตอรี่ {number_of_tickets} ใบ\nหมายเลขที่สุ่มได้: {', '.join(lottery_numbers)}\nยอดเงินที่ถูกหัก: {total_price} บาท\nยอดเงินคงเหลือ: {user_data[user_id]['balance']} บาท", ephemeral=True)
+
+        async def cancel_button_callback(interaction: discord.Interaction):
+            await interaction.response.send_message("ยกเลิกการซื้อล็อตเตอรี่", ephemeral=True)
+
+        confirm_button.callback = confirm_button_callback
+        cancel_button.callback = cancel_button_callback
+
+        view = View()
+        view.add_item(confirm_button)
+        view.add_item(cancel_button)
+
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 @client.event
 async def on_ready():
