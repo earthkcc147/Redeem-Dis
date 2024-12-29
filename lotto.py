@@ -25,6 +25,9 @@ prize_3 = 300    # รางวัล 300 บาท
 prize_4 = 100    # รางวัล 100 บาท
 prize_5 = 50      # รางวัล 50 บาท
 
+prize_3digits_2 = 2000  # รางวัลเลขท้าย 3 ตัว 2 รางวัล
+prize_2digits_1 = 3000  # รางวัลเลขท้าย 2 ตัว 1 รางวัล
+
 # ฟังก์ชันเพื่ออ่านข้อมูลจากไฟล์ JSON
 def load_data(group_id):
     folder_path = TOPUP_FOLDER_PATH
