@@ -78,8 +78,6 @@ def save_lotto_history(group_id, user_id, lottery_numbers, total_price):
 
 # ฟังก์ชันในการดึงข้อมูลล็อตเตอรี่ที่ผู้ใช้ได้ซื้อมาจากไฟล์ JSON
 async def check_lotto_history(interaction: discord.Interaction, group_id, user_id):
-    # ดึง user_id จาก interaction
-    user_id = interaction.user.id
     history_file = os.path.join(LOTTO_HISTORY_FOLDER_PATH, f"lotto{group_id}.json")
 
     if not os.path.exists(history_file):
@@ -106,6 +104,39 @@ async def check_lotto_history(interaction: discord.Interaction, group_id, user_i
     )
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
+
+# เพิ่มปุ่มตรวจสอบล็อตเตอรี่
+@client.event
+async def on_message(message):
+    if message.content.lower() == "!lottery":
+        group_id = message.guild.id  # ดึง ID ของกลุ่ม
+        user_id = str(message.author.id)  # ดึง ID ของผู้ใช้
+
+        embed = discord.Embed(
+            title="ล็อตเตอรี่",
+            description=f"ราคาล็อตเตอรี่ 1 ใบ = {LOTTERY_PRICE} บาท\nเลือกจำนวนล็อตเตอรี่ที่ต้องการซื้อ",
+            color=discord.Color.green()
+        )
+
+        lottery_button = Button(label="ซื้อล็อตเตอรี่", style=discord.ButtonStyle.green)
+        check_lotto_button = Button(label="ตรวจสอบล็อตเตอรี่ที่มี", style=discord.ButtonStyle.blurple)
+
+        async def lottery_button_callback(interaction: discord.Interaction):
+            modal = LotteryModal(group_id)
+            await interaction.response.send_modal(modal)
+
+        async def check_lotto_button_callback(interaction: discord.Interaction):
+            # เปลี่ยนการใช้ user_id เป็น interaction.user.id
+            await check_lotto_history(interaction, group_id, str(interaction.user.id))
+
+        lottery_button.callback = lottery_button_callback
+        check_lotto_button.callback = check_lotto_button_callback
+
+        view = View()
+        view.add_item(lottery_button)
+        view.add_item(check_lotto_button)
+
+        await message.channel.send(embed=embed, view=view)
 
 
 class LotteryModal(Modal):
