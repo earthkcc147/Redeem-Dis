@@ -78,6 +78,8 @@ def save_lotto_history(group_id, user_id, lottery_numbers, total_price):
 
 # ฟังก์ชันในการดึงข้อมูลล็อตเตอรี่ที่ผู้ใช้ได้ซื้อมาจากไฟล์ JSON
 async def check_lotto_history(interaction: discord.Interaction, group_id, user_id):
+    # ดึง user_id จาก interaction
+    user_id = interaction.user.id
     history_file = os.path.join(LOTTO_HISTORY_FOLDER_PATH, f"lotto{group_id}.json")
 
     if not os.path.exists(history_file):
