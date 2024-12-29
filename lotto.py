@@ -126,7 +126,7 @@ class LotteryModal(Modal):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 # สร้างฟังก์ชันสุ่มรางวัล
-@@tasks.loop(minutes=RAFFLE_INTERVAL)
+@tasks.loop(minutes=RAFFLE_INTERVAL)
 async def raffle():
     for guild in client.guilds:
         group_id = guild.id
