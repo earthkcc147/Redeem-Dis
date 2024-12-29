@@ -486,4 +486,18 @@ async def on_message(message):
         # ดูประวัติ
         async def check_lotto_button_callback(interaction: discord.Interaction):
             # ใช้ interaction.user.id แทน user_id ที่ประกาศใน on_message
-            awa
+            await check_lotto_history(interaction, group_id, str(interaction.user.id))
+
+        check_lotto_button.callback = check_lotto_button_callback
+
+        view = View()
+        view.add_item(lottery_button)
+        view.add_item(custom_lottery_button)
+        view.add_item(lottery_3digits_button)
+        view.add_item(last_two_button)
+        view.add_item(check_lotto_button)
+
+        await message.channel.send(embed=embed, view=view)
+
+# Run the bot
+client.run("YOUR_DISCORD_BOT_TOKEN")
