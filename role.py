@@ -7,14 +7,11 @@ intents = discord.Intents.default()
 intents.members = True
 client = commands.Bot(command_prefix="!", intents=intents)
 
-# คำสั่ง !รับยศ <role_id>
+# คำสั่ง !รับยศ @Role
 @client.command()
-async def รับยศ(ctx, role_id: int):
-    guild = ctx.guild
-    role = guild.get_role(role_id)  # ค้นหายศจาก role_id ที่ผู้ใช้พิมพ์มา
-
+async def รับยศ(ctx, role: discord.Role = None):
     if not role:
-        await ctx.send("❌ ไม่พบยศที่คุณต้องการ กรุณาตรวจสอบ ID ของยศ")
+        await ctx.send("❌ กรุณาแท็กยศที่ต้องการ เช่น `!รับยศ @ชื่อยศ`")
         return
 
     # Embed
