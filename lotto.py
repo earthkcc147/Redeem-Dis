@@ -360,9 +360,8 @@ class LottoLastTwoModal(Modal):
 # ฟังก์ชันสุ่มรางวัลที่ปรับปรุงแล้ว
 @tasks.loop(minutes=RAFFLE_INTERVAL)
 async def raffle():
-    today = datetime.datetime.today()  # วันที่ปัจจุบัน
-    today_week = today.isocalendar()[1]  # สัปดาห์ที่ของปีปัจจุบัน
-    today_year = today.year  # ปีปัจจุบัน
+    today = datetime.today()  # วันที่ปัจจุบัน
+    today_week = today.isocalendar()[1]  # สัปดาห์ของปี
 
     for guild in client.guilds:
         group_id = guild.id
@@ -401,13 +400,11 @@ async def raffle():
 
         # เลือกผู้ถูกรางวัลโดยมีโอกาส 10% สำหรับแต่ละผู้ใช้
         for user_id, data in user_data.items():
-            # ตรวจสอบว่าเป็นการซื้อในสัปดาห์นี้หรือไม่
-            purchase_time = datetime.datetime.fromtimestamp(data.get('created_at'))
-            purchase_week = purchase_time.isocalendar()[1]  # สัปดาห์ของการซื้อ
-            purchase_year = purchase_time.year  # ปีของการซื้อ
+            # ตรวจสอบว่าอาทิตย์ของการซื้อเป็นสัปดาห์นี้หรือไม่
+            purchase_date = datetime.fromtimestamp(data.get('created_at'))
+            purchase_week = purchase_date.isocalendar()[1]
 
-            # ตรวจสอบว่าการซื้อเป็นในสัปดาห์และปีปัจจุบันหรือไม่
-            if purchase_year == today_year and purchase_week == today_week and random.random() < (RAFFLE_CHANCE / 100):
+            if purchase_week == today_week and random.random() < (RAFFLE_CHANCE / 100):
                 winner_number = "".join([str(random.randint(0, 9)) for _ in range(NUM_DIGITS)])
                 if winner_number not in winners:
                     winners[winner_number] = [user_id]
