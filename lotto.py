@@ -478,25 +478,28 @@ async def raffle():
         if channel:
             await channel.send(embed=embed)
 
+
+
 class AdminSettingsModal(Modal):
     def __init__(self, group_id):
-        super().__init__(title="ตั้งค่าล็อตเตอรี่สำหรับแอดมิน")
+        super().__init__(title="ตั้งค่าการจับรางวัล")
+
         self.group_id = group_id
 
-        # กำหนด input สำหรับราคา
+        # กำหนด TextInput โดยใช้ default แทน value
         self.price_input = TextInput(
             label="ราคาล็อตเตอรี่ 1 ใบ (บาท)",
             placeholder="กรอกจำนวนราคา",
             required=True,
-            value=str(LOTTERY_PRICE),
+            default=str(LOTTERY_PRICE),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=5
         )
-        self.custom_price_input = TextInput(  # เพิ่มฟิลด์สำหรับ LOTTERY_CUSTOM_PRICE
+        self.custom_price_input = TextInput(
             label="ราคาล็อตเตอรี่ 1 ใบ (ค่าปรับแต่ง)",
             placeholder="กรอกจำนวนราคาปรับแต่ง",
             required=True,
-            value=str(LOTTERY_CUSTOM_PRICE),
+            default=str(LOTTERY_CUSTOM_PRICE),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=5
         )
@@ -504,7 +507,7 @@ class AdminSettingsModal(Modal):
             label="ระยะห่างในการสุ่มรางวัล (นาที)",
             placeholder="กรอกจำนวนระยะห่าง",
             required=True,
-            value=str(RAFFLE_INTERVAL),
+            default=str(RAFFLE_INTERVAL),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=3
         )
@@ -512,7 +515,7 @@ class AdminSettingsModal(Modal):
             label="โอกาสในการถูกรางวัล (%)",
             placeholder="กรอกโอกาสที่ต้องการ",
             required=True,
-            value=str(RAFFLE_CHANCE),
+            default=str(RAFFLE_CHANCE),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=3
         )
@@ -520,7 +523,7 @@ class AdminSettingsModal(Modal):
             label="รางวัลที่ 1 (บาท)",
             placeholder="กรอกรางวัลที่ 1",
             required=True,
-            value=str(prize_1),
+            default=str(prize_1),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=5
         )
@@ -528,7 +531,7 @@ class AdminSettingsModal(Modal):
             label="รางวัลใกล้เคียงที่ 1 (บาท)",
             placeholder="กรอกรางวัลใกล้เคียงที่ 1",
             required=True,
-            value=str(near_prize_1),
+            default=str(near_prize_1),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=5
         )
@@ -536,7 +539,7 @@ class AdminSettingsModal(Modal):
             label="รางวัลที่ 2 (บาท)",
             placeholder="กรอกรางวัลที่ 2",
             required=True,
-            value=str(prize_2),
+            default=str(prize_2),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=5
         )
@@ -544,7 +547,7 @@ class AdminSettingsModal(Modal):
             label="รางวัลที่ 3 (บาท)",
             placeholder="กรอกรางวัลที่ 3",
             required=True,
-            value=str(prize_3),
+            default=str(prize_3),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=5
         )
@@ -552,7 +555,7 @@ class AdminSettingsModal(Modal):
             label="รางวัลที่ 4 (บาท)",
             placeholder="กรอกรางวัลที่ 4",
             required=True,
-            value=str(prize_4),
+            default=str(prize_4),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=5
         )
@@ -560,7 +563,7 @@ class AdminSettingsModal(Modal):
             label="รางวัลที่ 5 (บาท)",
             placeholder="กรอกรางวัลที่ 5",
             required=True,
-            value=str(prize_5),
+            default=str(prize_5),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=5
         )
@@ -568,7 +571,7 @@ class AdminSettingsModal(Modal):
             label="รางวัลเลขท้าย 3 ตัว (บาท)",
             placeholder="กรอกรางวัลเลขท้าย 3 ตัว",
             required=True,
-            value=str(RAFFLE_3DIGIT_PRIZE),
+            default=str(RAFFLE_3DIGIT_PRIZE),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=5
         )
@@ -576,63 +579,12 @@ class AdminSettingsModal(Modal):
             label="รางวัลเลขท้าย 2 ตัว (บาท)",
             placeholder="กรอกรางวัลเลขท้าย 2 ตัว",
             required=True,
-            value=str(RAFFLE_2DIGIT_PRIZE),
+            default=str(RAFFLE_2DIGIT_PRIZE),  # เปลี่ยนจาก value เป็น default
             min_length=1,
             max_length=5
         )
-
-        # เพิ่ม input field ทั้งหมด
-        self.add_item(self.price_input)
-        self.add_item(self.custom_price_input)  # เพิ่ม input สำหรับราคาแบบปรับแต่ง
-        self.add_item(self.interval_input)
-        self.add_item(self.chance_input)
-        self.add_item(self.prize_1_input)
-        self.add_item(self.near_prize_1_input)
-        self.add_item(self.prize_2_input)
-        self.add_item(self.prize_3_input)
-        self.add_item(self.prize_4_input)
-        self.add_item(self.prize_5_input)
-        self.add_item(self.raffle_3digit_input)
-        self.add_item(self.raffle_2digit_input)
-
-    async def on_submit(self, interaction: discord.Interaction):
-        user_id = interaction.user.id
-        if not interaction.user.guild_permissions.administrator:
-            await interaction.response.send_message("คุณต้องเป็นแอดมินในการปรับแต่งการตั้งค่า", ephemeral=True)
-            return
-
-        # รับค่าจากฟอร์ม
-        global LOTTERY_PRICE, LOTTERY_CUSTOM_PRICE, RAFFLE_INTERVAL, RAFFLE_CHANCE, prize_1, near_prize_1, prize_2, prize_3, prize_4, prize_5, RAFFLE_3DIGIT_PRIZE, RAFFLE_2DIGIT_PRIZE
-        LOTTERY_PRICE = int(self.price_input.value)
-        LOTTERY_CUSTOM_PRICE = int(self.custom_price_input.value)  # เก็บค่าจาก custom price
-        RAFFLE_INTERVAL = int(self.interval_input.value)
-        RAFFLE_CHANCE = float(self.chance_input.value)
-        prize_1 = int(self.prize_1_input.value)
-        near_prize_1 = int(self.near_prize_1_input.value)
-        prize_2 = int(self.prize_2_input.value)
-        prize_3 = int(self.prize_3_input.value)
-        prize_4 = int(self.prize_4_input.value)
-        prize_5 = int(self.prize_5_input.value)
-        RAFFLE_3DIGIT_PRIZE = int(self.raffle_3digit_input.value)
-        RAFFLE_2DIGIT_PRIZE = int(self.raffle_2digit_input.value)
-
-        # ส่งข้อความยืนยัน
-        await interaction.response.send_message(
-            f"ตั้งค่าล็อตเตอรี่ได้อัปเดตแล้ว:\n"
-            f"ราคาล็อตเตอรี่ 1 ใบ: {LOTTERY_PRICE} บาท\n"
-            f"ราคาล็อตเตอรี่ 1 ใบ (ปรับแต่ง): {LOTTERY_CUSTOM_PRICE} บาท\n"
-            f"ระยะห่างในการสุ่มรางวัล: {RAFFLE_INTERVAL} นาที\n"
-            f"โอกาสในการถูกรางวัล: {RAFFLE_CHANCE}%\n"
-            f"รางวัลที่ 1: {prize_1} บาท\n"
-            f"รางวัลใกล้เคียงที่ 1: {near_prize_1} บาท\n"
-            f"รางวัลที่ 2: {prize_2} บาท\n"
-            f"รางวัลที่ 3: {prize_3} บาท\n"
-            f"รางวัลที่ 4: {prize_4} บาท\n"
-            f"รางวัลที่ 5: {prize_5} บาท\n"
-            f"รางวัลเลขท้าย 3 ตัว: {RAFFLE_3DIGIT_PRIZE} บาท\n"
-            f"รางวัลเลขท้าย 2 ตัว: {RAFFLE_2DIGIT_PRIZE} บาท",
-            ephemeral=True
-        )
+        
+        # เพิ่ม TextInput อื่นๆ ได้ตามต้องการ
 
 
 
