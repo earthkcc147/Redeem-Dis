@@ -479,6 +479,124 @@ async def raffle():
             await channel.send(embed=embed)
 
 
+
+# Modal สำหรับตั้งค่าทั่วไป
+class GeneralSettingsModal(Modal):
+    def __init__(self):
+        super().__init__(title="ตั้งค่าทั่วไป")
+        self.lottery_custom_price = TextInput(
+            label="ราคา 1 ใบ (Custom)",
+            placeholder="กรอกราคาที่กำหนดเอง",
+            required=True,
+            default=str(LOTTERY_CUSTOM_PRICE),
+        )
+        self.lottery_price = TextInput(
+            label="ราคา 1 ใบ (ปกติ)",
+            placeholder="กรอกราคาปกติ",
+            required=True,
+            default=str(LOTTERY_PRICE),
+        )
+        self.num_digits = TextInput(
+            label="จำนวนหลักของหมายเลขที่สุ่ม",
+            placeholder="กรอกจำนวนหลัก",
+            required=True,
+            default=str(NUM_DIGITS),
+        )
+        self.raffle_interval = TextInput(
+            label="ระยะห่างในการสุ่มรางวัล (นาที)",
+            placeholder="กรอกเวลา",
+            required=True,
+            default=str(RAFFLE_INTERVAL),
+        )
+        self.raffle_chance = TextInput(
+            label="โอกาสถูกรางวัล (%)",
+            placeholder="กรอกโอกาส",
+            required=True,
+            default=str(RAFFLE_CHANCE),
+        )
+
+        self.add_item(self.lottery_custom_price)
+        self.add_item(self.lottery_price)
+        self.add_item(self.num_digits)
+        self.add_item(self.raffle_interval)
+        self.add_item(self.raffle_chance)
+
+# Modal สำหรับตั้งค่ารางวัล
+class PrizeSettingsModal(Modal):
+    def __init__(self):
+        super().__init__(title="ตั้งค่ารางวัล")
+        self.prize_1_input = TextInput(
+            label="รางวัลที่ 1",
+            placeholder="กรอกจำนวนรางวัลที่ 1",
+            required=True,
+            default=str(prize_1),
+        )
+        self.near_prize_1_input = TextInput(
+            label="รางวัลใกล้เคียงที่ 1",
+            placeholder="กรอกจำนวนรางวัล",
+            required=True,
+            default=str(near_prize_1),
+        )
+        self.prize_2_input = TextInput(
+            label="รางวัลที่ 2",
+            placeholder="กรอกจำนวนรางวัลที่ 2",
+            required=True,
+            default=str(prize_2),
+        )
+        self.prize_3_input = TextInput(
+            label="รางวัลที่ 3",
+            placeholder="กรอกจำนวนรางวัลที่ 3",
+            required=True,
+            default=str(prize_3),
+        )
+        self.prize_4_input = TextInput(
+            label="รางวัลที่ 4",
+            placeholder="กรอกจำนวนรางวัลที่ 4",
+            required=True,
+            default=str(prize_4),
+        )
+        self.prize_5_input = TextInput(
+            label="รางวัลที่ 5",
+            placeholder="กรอกจำนวนรางวัลที่ 5",
+            required=True,
+            default=str(prize_5),
+        )
+        self.raffle_3digit_prize_input = TextInput(
+            label="รางวัลเลขท้าย 3 ตัว",
+            placeholder="กรอกจำนวนรางวัล",
+            required=True,
+            default=str(RAFFLE_3DIGIT_PRIZE),
+        )
+        self.raffle_2digit_prize_input = TextInput(
+            label="รางวัลเลขท้าย 2 ตัว",
+            placeholder="กรอกจำนวนรางวัล",
+            required=True,
+            default=str(RAFFLE_2DIGIT_PRIZE),
+        )
+
+        self.add_item(self.prize_1_input)
+        self.add_item(self.near_prize_1_input)
+        self.add_item(self.prize_2_input)
+        self.add_item(self.prize_3_input)
+        self.add_item(self.prize_4_input)
+        self.add_item(self.prize_5_input)
+        self.add_item(self.raffle_3digit_prize_input)
+        self.add_item(self.raffle_2digit_prize_input)
+
+# View สำหรับแสดงปุ่มเพื่อเปิด Modal
+class SettingsView(discord.ui.View):
+    @button(label="ตั้งค่าทั่วไป", style=discord.ButtonStyle.green)
+    async def general_settings_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        modal = GeneralSettingsModal()
+        await interaction.response.send_modal(modal)
+
+    @button(label="ตั้งค่ารางวัล", style=discord.ButtonStyle.blurple)
+    async def prize_settings_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        modal = PrizeSettingsModal()
+        await interaction.response.send_modal(modal)
+
+
+
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
@@ -547,6 +665,42 @@ async def on_message(message):
         view.add_item(check_lotto_button)
 
         await message.channel.send(embed=embed, view=view)
+
+    # ตรวจสอบคำสั่ง !ตั้งค่า
+    if message.content.lower() == "!ตั้งค่า":
+        if message.author.guild_permissions.administrator:  # ตรวจสอบว่าผู้ใช้เป็น admin หรือไม่
+            embed = discord.Embed(
+                title="การตั้งค่า",
+                description="เลือกการตั้งค่าที่ต้องการ:",
+                color=discord.Color.blue()
+            )
+
+            # ปุ่มตั้งค่าทั่วไป (เฉพาะ admin)
+            general_settings_button = Button(label="ตั้งค่าทั่วไป", style=discord.ButtonStyle.green)
+            async def general_settings_button_callback(interaction: discord.Interaction):
+                modal = GeneralSettingsModal()
+                await interaction.response.send_modal(modal)
+
+            general_settings_button.callback = general_settings_button_callback
+
+            # ปุ่มตั้งค่ารางวัล (เฉพาะ admin)
+            prize_settings_button = Button(label="ตั้งค่ารางวัล", style=discord.ButtonStyle.blurple)
+            async def prize_settings_button_callback(interaction: discord.Interaction):
+                modal = PrizeSettingsModal()
+                await interaction.response.send_modal(modal)
+
+            prize_settings_button.callback = prize_settings_button_callback
+
+            # สร้าง view สำหรับปุ่ม
+            view = View()
+            view.add_item(general_settings_button)
+            view.add_item(prize_settings_button)
+
+            # ส่ง embed พร้อมปุ่ม
+            await message.channel.send(embed=embed, view=view)
+        else:
+            await message.channel.send("คุณไม่มีสิทธิ์ในการเข้าถึงการตั้งค่านี้.")
+
 
 # Run the bot
 client.run("YOUR_DISCORD_BOT_TOKEN")
