@@ -493,21 +493,13 @@ class AdminSettingsModal(Modal):
             min_length=1,
             max_length=5
         )
-        self.interval_input = TextInput(
-            label="ระยะห่างในการสุ่มรางวัล (นาที)",
-            placeholder="กรอกจำนวนระยะห่าง",
+        self.custom_price_input = TextInput(
+            label="ราคาล็อตเตอรี่แบบพิเศษ (บาท)",
+            placeholder="กรอกจำนวนราคาพิเศษ",
             required=True,
-            default=str(RAFFLE_INTERVAL),
+            default=str(LOTTERY_CUSTOM_PRICE),
             min_length=1,
-            max_length=3
-        )
-        self.chance_input = TextInput(
-            label="โอกาสในการถูกรางวัล (%)",
-            placeholder="กรอกโอกาสที่ต้องการ",
-            required=True,
-            default=str(RAFFLE_CHANCE),
-            min_length=1,
-            max_length=3
+            max_length=5
         )
         self.prize_1_input = TextInput(
             label="รางวัลที่ 1 (บาท)",
@@ -576,8 +568,7 @@ class AdminSettingsModal(Modal):
 
         # เพิ่ม input field ให้ครบทุกรางวัล
         self.add_item(self.price_input)
-        self.add_item(self.interval_input)
-        self.add_item(self.chance_input)
+        
         self.add_item(self.prize_1_input)
         self.add_item(self.near_prize_1_input)
         self.add_item(self.prize_2_input)
@@ -594,10 +585,9 @@ class AdminSettingsModal(Modal):
             return
 
         # Get values from the modal inputs
-        global LOTTERY_PRICE, RAFFLE_INTERVAL, RAFFLE_CHANCE, prize_1, near_prize_1, prize_2, prize_3, prize_4, prize_5, RAFFLE_3DIGIT_PRIZE, RAFFLE_2DIGIT_PRIZE
+        global LOTTERY_PRICE, prize_1, near_prize_1, prize_2, prize_3, prize_4, prize_5, RAFFLE_3DIGIT_PRIZE, RAFFLE_2DIGIT_PRIZE
         LOTTERY_PRICE = int(self.price_input.value)
-        RAFFLE_INTERVAL = int(self.interval_input.value)
-        RAFFLE_CHANCE = float(self.chance_input.value)
+        
         prize_1 = int(self.prize_1_input.value)
         near_prize_1 = int(self.near_prize_1_input.value)
         prize_2 = int(self.prize_2_input.value)
@@ -612,8 +602,7 @@ class AdminSettingsModal(Modal):
         await interaction.response.send_message(
             f"ตั้งค่าล็อตเตอรี่ได้อัปเดตแล้ว:\n"
             f"ราคาล็อตเตอรี่ 1 ใบ: {LOTTERY_PRICE} บาท\n"
-            f"ระยะห่างในการสุ่มรางวัล: {RAFFLE_INTERVAL} นาที\n"
-            f"โอกาสในการถูกรางวัล: {RAFFLE_CHANCE}%\n"
+            
             f"รางวัลที่ 1: {prize_1} บาท\n"
             f"รางวัลใกล้เคียงที่ 1: {near_prize_1} บาท\n"
             f"รางวัลที่ 2: {prize_2} บาท\n"
