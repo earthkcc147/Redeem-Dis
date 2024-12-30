@@ -54,7 +54,12 @@ async def convert(ctx):
         # ใช้ FigletFont.getFonts() เพื่อดึงรายชื่อฟอนต์
         fonts = pyfiglet.FigletFont.getFonts()
         font_list = "\n".join(fonts[:50])  # จำกัดแสดงแค่ 50 ฟอนต์แรก
-        await interaction.response.send_message(f"รายชื่อฟอนต์ที่รองรับ (บางส่วน):\n```\n{font_list}\n```", ephemeral=True)
+
+        # ใช้ defer() เพื่อระบุว่า bot กำลังประมวลผล
+        await interaction.response.defer()
+
+        # ส่งข้อความรายชื่อฟอนต์หลังจากที่ทำการ defer
+        await interaction.followup.send(f"รายชื่อฟอนต์ที่รองรับ (บางส่วน):\n```\n{font_list}\n```", ephemeral=True)
 
     font_list_button.callback = font_list_callback
     view.add_item(font_list_button)
