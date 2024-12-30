@@ -64,6 +64,3 @@ async def convert(ctx):
 # รันบอท
 bot.run("YOUR_BOT_TOKEN")
 
-
-
-ให้มีช่องกรอกสำหรับกำหนดฟอนต์
