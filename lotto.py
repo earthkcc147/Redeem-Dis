@@ -585,12 +585,12 @@ class PrizeSettingsModal(Modal):
 
 # View สำหรับแสดงปุ่มเพื่อเปิด Modal
 class SettingsView(discord.ui.View):
-    @button(label="ตั้งค่าทั่วไป", style=discord.ButtonStyle.green)
+    @Button(label="ตั้งค่าทั่วไป", style=discord.ButtonStyle.green)
     async def general_settings_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = GeneralSettingsModal()
         await interaction.response.send_modal(modal)
 
-    @button(label="ตั้งค่ารางวัล", style=discord.ButtonStyle.blurple)
+    @Button(label="ตั้งค่ารางวัล", style=discord.ButtonStyle.blurple)
     async def prize_settings_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = PrizeSettingsModal()
         await interaction.response.send_modal(modal)
