@@ -8,9 +8,9 @@ intents.message_content = True
 # สร้าง Bot
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# โหลด Cog
+# โหลด Cog จากโฟลเดอร์ cogs
 async def load_cogs():
-    await bot.load_extension("convert_cog")
+    await bot.load_extension("cogs.convert_cog")
 
 @bot.event
 async def on_ready():
