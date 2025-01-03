@@ -3,15 +3,19 @@ from discord.ext import commands, tasks
 import requests
 import json
 
-class BotStatusCog(commands.Cog):
+# Webhook URL
+WEBHOOK_URL = "YOUR_WEBHOOK_URL"
+
+# รายการบอทที่ต้องการตรวจสอบ
+bots_to_check = [
+    {"name": "Bot1", "id": 123456789012345678},  # เปลี่ยนเป็น ID ของบอทที่ต้องการตรวจสอบ
+    {"name": "Bot2", "id": 987654321098765432},
+    # เพิ่มบอทที่ต้องการตรวจสอบในลิสต์นี้
+]
+
+class BotChecker(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.WEBHOOK_URL = "YOUR_WEBHOOK_URL"
-        self.bots_to_check = [
-            {"name": "Bot1", "id": 123456789012345678},  # เปลี่ยนเป็น ID ของบอทที่ต้องการตรวจสอบ
-            {"name": "Bot2", "id": 987654321098765432},
-            # เพิ่มบอทที่ต้องการตรวจสอบในลิสต์นี้
-        ]
         self.check_bots.start()
 
     # ฟังก์ชันตรวจสอบสถานะของบอท
@@ -37,7 +41,7 @@ class BotStatusCog(commands.Cog):
             "Content-Type": "application/json"
         }
         try:
-            response = requests.post(self.WEBHOOK_URL, data=json.dumps(payload), headers=headers)
+            response = requests.post(WEBHOOK_URL, data=json.dumps(payload), headers=headers)
             if response.status_code == 204:
                 print(f"ส่งข้อมูลสถานะของ {bot_name} ไปที่ Webhook สำเร็จ!")
             else:
@@ -48,15 +52,17 @@ class BotStatusCog(commands.Cog):
     # ตั้งเวลาตรวจสอบทุกๆ 60 วินาที
     @tasks.loop(seconds=60)
     async def check_bots(self):
-        for bot_info in self.bots_to_check:
+        for bot_info in bots_to_check:
             bot_id = bot_info["id"]
             bot_name = bot_info["name"]
             status = await self.check_bot_status(bot_id)
             self.send_to_webhook(bot_name, status)
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print(f"{self.bot.user} เข้าสู่ระบบสำเร็จ!")
+    @check_bots.before_loop
+    async def before_check(self):
+        print("กำลังรอการเชื่อมต่อกับ Discord...")
+        await self.bot.wait_until_ready()
 
+# การโหลด Cog
 def setup(bot):
-    bot.add_cog(BotStatusCog(bot))
+    bot.add_cog(BotChecker(bot))
