@@ -1,8 +1,7 @@
-# pip install discord.py pyfiglet
-
 import discord
 from discord.ext import commands
 import pyfiglet
+import asyncio
 
 # สร้าง Bot
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.default())
@@ -116,8 +115,10 @@ class ConvertCog(commands.Cog):
         await ctx.send(embed=embed, view=view)
 
 # เพิ่ม Cog เข้า Bot
-async def setup(bot):
-    await bot.add_cog(ConvertCog(bot))
+async def main():
+    async with bot:
+        await bot.add_cog(ConvertCog(bot))
+        await bot.start("YOUR_BOT_TOKEN")
 
 # รันบอท
-bot.run("YOUR_BOT_TOKEN")
+asyncio.run(main())
