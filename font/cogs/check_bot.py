@@ -1,42 +1,62 @@
 import discord
 from discord.ext import commands, tasks
 import requests
+import json
 
-# สร้างคลาสที่เป็น Cog
-class BotStatus(commands.Cog):
+class BotStatusCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.check_bot_status.start()  # เริ่มต้น task ที่จะเช็คสถานะบอท
+        self.WEBHOOK_URL = "YOUR_WEBHOOK_URL"
+        self.bots_to_check = [
+            {"name": "Bot1", "id": 123456789012345678},  # เปลี่ยนเป็น ID ของบอทที่ต้องการตรวจสอบ
+            {"name": "Bot2", "id": 987654321098765432},
+            # เพิ่มบอทที่ต้องการตรวจสอบในลิสต์นี้
+        ]
+        self.check_bots.start()
 
-    @tasks.loop(minutes=5)  # ตรวจสอบสถานะทุกๆ 5 นาที
-    async def check_bot_status(self):
-        bot_ids = ['BOT_ID_1', 'BOT_ID_2']  # แทนที่ด้วย ID ของบอทที่คุณต้องการตรวจสอบ
-        for bot_id in bot_ids:
-            bot = await self.bot.fetch_user(bot_id)  # ดึงข้อมูลของบอท
-            status = 'online' if bot.status == discord.Status.online else 'offline'
-            
-            # ส่งข้อมูลไปยัง Webhook
-            self.send_status_to_webhook(bot_id, status)
+    # ฟังก์ชันตรวจสอบสถานะของบอท
+    async def check_bot_status(self, bot_id: int):
+        try:
+            # เช็คสถานะออนไลน์ของบอท
+            bot_user = await self.bot.fetch_user(bot_id)  # ดึงข้อมูลของบอท
+            if bot_user.status != discord.Status.offline:
+                status = "ออนไลน์"
+            else:
+                status = "ออฟไลน์"
+            return status
+        except Exception as e:
+            print(f"เกิดข้อผิดพลาด: {e}")
+            return "ไม่สามารถตรวจสอบสถานะได้"
 
-    def send_status_to_webhook(self, bot_id, status):
-        # ส่งข้อมูลไปยัง Webhook
-        webhook_url = "YOUR_WEBHOOK_URL"
-        data = {
-            "content": f"บอท ID {bot_id} สถานะ: {status}",
+    # ฟังก์ชันส่งข้อมูลไปที่ Webhook
+    def send_to_webhook(self, bot_name: str, status: str):
+        payload = {
+            "content": f"บอท {bot_name} สถานะ: {status}"
         }
-        response = requests.post(webhook_url, json=data)
-        if response.status_code == 204:
-            print(f"✅ ส่งข้อมูลสถานะไปยัง Webhook สำหรับบอท {bot_id} สถานะ {status}")
-        else:
-            print(f"❌ ไม่สามารถส่งข้อมูลไปยัง Webhook สำหรับบอท {bot_id}")
+        headers = {
+            "Content-Type": "application/json"
+        }
+        try:
+            response = requests.post(self.WEBHOOK_URL, data=json.dumps(payload), headers=headers)
+            if response.status_code == 204:
+                print(f"ส่งข้อมูลสถานะของ {bot_name} ไปที่ Webhook สำเร็จ!")
+            else:
+                print(f"เกิดข้อผิดพลาดในการส่งข้อมูล: {response.status_code}")
+        except Exception as e:
+            print(f"ไม่สามารถส่งข้อมูลไปที่ Webhook: {e}")
 
-    @commands.command()
-    async def check_status(self, ctx, bot_id: str):
-        """เช็คสถานะของบอทที่กำหนด"""
-        bot = await self.bot.fetch_user(bot_id)
-        status = 'online' if bot.status == discord.Status.online else 'offline'
-        await ctx.send(f"บอท ID {bot_id} สถานะ: {status}")
+    # ตั้งเวลาตรวจสอบทุกๆ 60 วินาที
+    @tasks.loop(seconds=60)
+    async def check_bots(self):
+        for bot_info in self.bots_to_check:
+            bot_id = bot_info["id"]
+            bot_name = bot_info["name"]
+            status = await self.check_bot_status(bot_id)
+            self.send_to_webhook(bot_name, status)
 
-# เพิ่ม Cog เข้ากับบอท
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print(f"{self.bot.user} เข้าสู่ระบบสำเร็จ!")
+
 def setup(bot):
-    bot.add_cog(BotStatus(bot))
+    bot.add_cog(BotStatusCog(bot))
