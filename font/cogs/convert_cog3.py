@@ -117,5 +117,3 @@ class ConvertCog(commands.Cog):
 async def setup(bot):
     await bot.add_cog(ConvertCog(bot))
 
-# รันบอท
-bot.run("YOUR_BOT_TOKEN")
