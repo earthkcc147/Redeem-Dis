@@ -1,12 +1,13 @@
 import discord
-from discord.ext import commands, menus
+from discord.ext import commands
+from discord.ext.menus import ListPageSource, MenuPages
 import pyfiglet
 
 # สร้าง Bot
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.default())
 
 # สร้าง FontMenu
-class FontMenu(menus.ListPageSource):
+class FontMenu(ListPageSource):
     def __init__(self, fonts):
         super().__init__(fonts, per_page=10)
 
@@ -69,7 +70,7 @@ class ConvertCog(commands.Cog):
 
         async def font_list_callback(interaction: discord.Interaction):
             fonts = pyfiglet.FigletFont.getFonts()
-            menu = menus.MenuPages(source=FontMenu(fonts), clear_reactions_after=True)
+            menu = MenuPages(source=FontMenu(fonts), clear_reactions_after=True)
             await menu.start(ctx)
 
         font_list_button.callback = font_list_callback
