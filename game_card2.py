@@ -219,10 +219,12 @@ async def card(ctx):
     group_id = str(ctx.guild.id)  # ใช้ ID ของกลุ่มที่
     user_id = str(ctx.author.id)  # ใช้ ID ของผู้ใช้
 
-    # สร้าง Embed
+    # แสดงรายการรางวัลใน Embed โดยไม่แสดงเปอร์เซ็นต์
+    prize_list = "\n".join(load_prizes(group_id).keys())
+
     embed = discord.Embed(
         title="สุ่มรางวัล!",
-        description="เลือกหมายเลขที่คุณต้องการสุ่มรางวัล!",
+        description=f"กรุณากดปุ่มเพื่อสุ่มรางวัลจากรางวัลที่มี:\n{prize_list}",
         color=discord.Color.gold()
     )
 
