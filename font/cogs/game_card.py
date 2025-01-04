@@ -176,6 +176,9 @@ class CardButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         try:
+            # รอ 1 วินาที
+            await asyncio.sleep(1)
+
             # ตรวจสอบยอดเงิน
             price = 5  # ราคา 5 บาทต่อการสุ่ม
             success, balance = update_balance(self.group_id, self.user_id, price)
@@ -183,6 +186,9 @@ class CardButton(discord.ui.Button):
             if not success:
                 await interaction.response.send_message(f"ยอดเงินของคุณไม่เพียงพอ! ยอดคงเหลือ: {balance} บาท", ephemeral=True)
                 return
+
+            # รอ 3 วินาที
+            await asyncio.sleep(3)
 
             # สุ่มรางวัล
             prize = get_random_prize(self.group_id)
