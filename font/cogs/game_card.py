@@ -2,6 +2,12 @@ import discord
 from discord.ext import commands
 import random
 
+# เปิดใช้งาน Intents ทั้งหมด
+intents = discord.Intents.all()
+
+# สร้างบอทพร้อม Intents
+bot = commands.Bot(command_prefix="!", intents=intents)
+
 # รางวัลและเปอร์เซ็นต์ (กำหนดในรูปแบบ Dictionary)
 PRIZES = {
     "รางวัลที่ 1: 1000 Coins": 10,   # 10%
