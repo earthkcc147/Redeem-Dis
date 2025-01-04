@@ -5,6 +5,8 @@ import json
 import os
 from datetime import datetime
 
+import asyncio
+
 # เปิดใช้งาน Intents ทั้งหมด
 intents = discord.Intents.all()
 
