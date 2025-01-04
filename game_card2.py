@@ -247,4 +247,3 @@ bot.run("YOUR_BOT_TOKEN")
 
 
 
-ทำไมไม่เป็น embed พร้อมปุ่ม
