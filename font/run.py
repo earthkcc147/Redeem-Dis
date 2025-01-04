@@ -3,12 +3,10 @@ from discord.ext import commands
 import asyncio
 import os
 
-# ตั้งค่า Intent
-intents = discord.Intents.default()
-intents.message_content = True
-intents.voice_states = True  # ให้บอทสามารถจัดการสถานะเสียงได้
+# เปิดใช้งาน Intents ทั้งหมด
+intents = discord.Intents.all()
 
-# สร้าง Bot
+# สร้างบอทพร้อม Intents
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ตั้งค่าการเปิด/ปิดฟีเจอร์
