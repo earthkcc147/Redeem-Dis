@@ -187,8 +187,13 @@ class CardButton(discord.ui.Button):
                 await interaction.response.send_message(f"ยอดเงินของคุณไม่เพียงพอ! ยอดคงเหลือ: {balance} บาท", ephemeral=True)
                 return
 
+            # ส่งข้อความ "กำลังสุ่ม..." และรอเวลา
+            msg = await interaction.response.send_message("กำลังสุ่ม...", ephemeral=True)
+
             # รอ 2 วินาที
             await asyncio.sleep(2)
+            # ลบข้อความ "กำลังสุ่ม..."
+            await msg.delete()
 
             # สุ่มรางวัล
             prize = get_random_prize(self.group_id)
