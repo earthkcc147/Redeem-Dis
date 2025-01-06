@@ -279,7 +279,7 @@ class ObfuscationVIPModal(discord.ui.Modal):
             os.remove(log_file)
 
         # แจ้งยอดเงินคงเหลือ
-        await interaction.followup.send(
+        await interaction.response.send_message(
             f"✅ ทำรายการสำเร็จ! ยอดเงินคงเหลือของคุณคือ {balance} บาท",
             ephemeral=True
 
