@@ -29,8 +29,8 @@ import discord
 from discord.ui import Modal, TextInput
 import requests
 
-# ฟังก์ชันเพื่ออ่านข้อมูลจากไฟล์ JSON
-def load_data(group_id):
+# ฟังก์ชันเพื่ออ่านข้อมูลจากไฟล์ JSON สำหรับยอดเงิน
+def load_data_balance(group_id):
     folder_path = "topup"
     data_file = os.path.join(folder_path, f"{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
 
@@ -50,8 +50,8 @@ def load_data(group_id):
     with open(data_file, 'r', encoding='utf-8') as f:
         return json.load(f)
 
-# ฟังก์ชันเพื่อบันทึกข้อมูลลงในไฟล์ JSON
-def save_data(data, group_id):
+# ฟังก์ชันเพื่อบันทึกข้อมูลลงในไฟล์ JSON สำหรับยอดเงิน
+def save_data_balance(data, group_id):
     folder_path = "topup"
     # ตรวจสอบว่าโฟลเดอร์ topup มีอยู่หรือไม่ ถ้าไม่ให้สร้าง
     if not os.path.exists(folder_path):
@@ -60,8 +60,6 @@ def save_data(data, group_id):
     data_file = os.path.join(folder_path, f"{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
     with open(data_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-
-
 
 
 class GiftLinkModal(discord.ui.Modal):
@@ -92,7 +90,7 @@ class GiftLinkModal(discord.ui.Modal):
             message = f"สำเร็จ! จำนวนเงิน: {result['amount']} บาท\nเบอร์รับเงิน: {result['phone']}\nลิ้งซองของขวัญ: {result['gift_link']}\nเวลาทำรายการ: {result['time']}"
 
             # อ่านข้อมูลสมาชิกจากไฟล์
-            user_data = load_data(self.group_id)
+            user_data = load_data_balance(self.group_id)
             user_id = str(interaction.user.id)  # ใช้ user id ของ Discord เป็น key
 
             # ถ้าผู้ใช้ไม่เคยมีข้อมูลในไฟล์ ให้สร้างข้อมูลใหม่
@@ -113,7 +111,7 @@ class GiftLinkModal(discord.ui.Modal):
             user_data[user_id]["history"].append(transaction)
 
             # บันทึกข้อมูลลงไฟล์
-            save_data(user_data, self.group_id)
+            save_data_balance(user_data, self.group_id)
 
             # ส่งข้อความไปยังช่องที่ต้องการ
             channel = client.get_channel(channel_id)
