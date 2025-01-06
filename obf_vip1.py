@@ -173,7 +173,7 @@ class ObfuscationView(discord.ui.View):
 class ObfuscationModal(discord.ui.Modal):
     def __init__(self, guild_id):
         super().__init__(title="กรุณากรอกโค้ด Python")
-        self.guild_id = guild_id
+        self.guild_id = str(interaction.guild.id) 
 
     code_input = discord.ui.TextInput(label="โค้ด Python", style=discord.TextStyle.paragraph, placeholder="กรอกโค้ดที่ต้องการเข้ารหัส", required=True, max_length=2000)
     filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
