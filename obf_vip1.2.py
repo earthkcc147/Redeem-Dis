@@ -221,5 +221,69 @@ class ObfuscationModal(discord.ui.Modal):
         if os.path.exists(log_file):
             os.remove(log_file)
 
+        # หากยังไม่มีข้อมูลการใช้งานให้สร้างข้อมูลในไฟล์
+        group_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+        usage_data = load_usage_data(group_id)
+
+        if user_id not in usage_data:
+            # กรณีที่ยังไม่มีข้อมูลการใช้งาน เพิ่มจำนวนครั้งเป็น 1 และบันทึกวันที่
+            usage_data[user_id] = {"count": 1, "last_used": datetime.today().strftime('%Y-%m-%d')}
+        else:
+            # หากมีข้อมูลแล้ว ตรวจสอบว่าเป็นการใช้งานครั้งแรกของวันนี้
+            if usage_data[user_id]['last_used'] != datetime.today().strftime('%Y-%m-%d'):
+                # เพิ่มจำนวนครั้งและอัปเดตวันที่
+                usage_data[user_id]['count'] = 1
+                usage_data[user_id]['last_used'] = datetime.today().strftime('%Y-%m-%d')
+
+        # บันทึกข้อมูลการใช้งานที่อัปเดตแล้ว
+        save_usage_data(group_id, usage_data)
+
+
+class ObfuscationVIPModal(discord.ui.Modal):
+    def __init__(self):
+        super().__init__(title="กรุณากรอกโค้ด Python (VIP)")
+
+    code_input = discord.ui.TextInput(
+        label="โค้ด Python",
+        style=discord.TextStyle.paragraph,
+        placeholder="กรอกโค้ดที่ต้องการเข้ารหัส (VIP)",
+        required=True,
+        max_length=4000  # เพิ่มขีดจำกัดสำหรับ VIP
+    )
+    filename_input = discord.ui.TextInput(
+        label="ชื่อไฟล์",
+        placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)",
+        required=True
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        code = self.code_input.value
+        filename = self.filename_input.value
+        guild_id = interaction.guild.id
+
+        # สร้างชื่อไฟล์ใน logs
+        log_filename = f"{filename}-vip-obf"
+
+        # เข้ารหัสโค้ด
+        obfuscated_code = rename_code(code)
+
+        # บันทึกโค้ดในโฟลเดอร์ logs
+        log_file = await save_log(log_filename, obfuscated_code)
+
+        # ส่งไฟล์ให้ผู้ใช้
+        await interaction.response.send_message(
+            file=discord.File(log_file),
+            content=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
+            ephemeral=True
+        )
+
+        # ลบไฟล์หลังส่ง
+        if os.path.exists(log_file):
+            os.remove(log_file)
+
+
+
+
 # เริ่มบอท
 bot.run('YOUR_DISCORD_BOT_TOKEN')
