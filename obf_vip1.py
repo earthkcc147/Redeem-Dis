@@ -105,26 +105,33 @@ def check_user_limit(guild_id, user_id):
 
     log_file = f"logs/obf_{guild_id}.json"
 
+    # อ่านข้อมูลจากไฟล์ JSON ถ้ามี
     if os.path.exists(log_file):
         with open(log_file, "r") as file:
             data = json.load(file)
     else:
         data = {}
 
-    if user_id not in data:
-        data[user_id] = {}
+    # หาก user_id ยังไม่มีในข้อมูลของ guild
+    if str(user_id) not in data:
+        data[str(user_id)] = {}
 
+    # หาวันที่ปัจจุบัน
     today = datetime.today().strftime('%Y-%m-%d')
-    if today in data[user_id]:
-        if data[user_id][today] < USER_LIMIT_PER_DAY:
-            data[user_id][today] += 1
-        else:
-            return False
-    else:
-        data[user_id][today] = 1
 
+    # ตรวจสอบจำนวนครั้งในวันที่ปัจจุบัน
+    if today in data[str(user_id)]:
+        if data[str(user_id)][today] < USER_LIMIT_PER_DAY:
+            data[str(user_id)][today] += 1  # เพิ่มจำนวนครั้งที่ใช้
+        else:
+            return False  # หากเกินจำนวนที่ตั้งไว้
+    else:
+        # หากไม่เคยใช้งานในวันนี้ให้เริ่มนับใหม่
+        data[str(user_id)][today] = 1
+
+    # บันทึกข้อมูลใหม่กลับลงไฟล์
     with open(log_file, "w") as file:
-        json.dump(data, file)
+        json.dump(data, file, ensure_ascii=False, indent=4)
 
     return True
 
