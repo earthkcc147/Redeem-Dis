@@ -196,28 +196,34 @@ class ObfuscationModal(discord.ui.Modal):
         usage_data = load_usage_data(self.group_id)
 
         # ตรวจสอบการใช้งานแปลงปกติ
-        if can_use_today(usage_data, self.user_id, self.group_id, is_free=False):
-            usage_data[self.user_id]['normal_count'] -= 1  # เพิ่มจำนวนการใช้งานแปลงปกติ
-            save_usage_data(self.group_id, usage_data)
+        if usage_data.get(self.user_id, {}).get('normal_count', 0) > 0:  # ตรวจสอบว่า normal_count มากกว่า 0
+            if can_use_today(usage_data, self.user_id, self.group_id, is_free=False):
+                usage_data[self.user_id]['normal_count'] -= 1  # ลดจำนวนการใช้งานแปลงปกติ
+                save_usage_data(self.group_id, usage_data)
 
-            code = self.code_input.value
-            filename = self.filename_input.value
-            obfuscated_code = rename_code(code)
+                code = self.code_input.value
+                filename = self.filename_input.value
+                obfuscated_code = rename_code(code)
 
-            log_filename = f"{filename}-obf"
-            log_file = await save_log(log_filename, obfuscated_code)
+                log_filename = f"{filename}-obf"
+                log_file = await save_log(log_filename, obfuscated_code)
 
-            await interaction.response.send_message(
-                file=discord.File(log_file),
-                content=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
-                ephemeral=True
-            )
+                await interaction.response.send_message(
+                    file=discord.File(log_file),
+                    content=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
+                    ephemeral=True
+                )
 
-            if os.path.exists(log_file):
-                os.remove(log_file)
+                if os.path.exists(log_file):
+                    os.remove(log_file)
+            else:
+                await interaction.response.send_message(
+                    "คุณไม่สามารถแปลงโค้ดได้แล้ว เนื่องจากคุณหมดจำนวนครั้งที่สามารถใช้งานได้",
+                    ephemeral=True
+                )
         else:
             await interaction.response.send_message(
-                "คุณไม่สามารถแปลงโค้ดได้แล้ว เนื่องจากคุณหมดจำนวนครั้งที่สามารถใช้งานได้",
+                "คุณไม่สามารถแปลงโค้ดได้ เนื่องจากจำนวนการใช้งานแปลงปกติของคุณหมดแล้ว",
                 ephemeral=True
             )
 
