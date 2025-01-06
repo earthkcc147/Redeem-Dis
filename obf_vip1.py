@@ -162,7 +162,7 @@ class ObfuscationView(discord.ui.View):
         self.add_item(discord.ui.Button(label="จ้างทำบอท", style=discord.ButtonStyle.link, url="https://www.facebook.com/yourprofile"))
 
     @discord.ui.button(label="แปลง", style=discord.ButtonStyle.primary)
-async def obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         # เรียกใช้งาน ObfuscationModal โดยส่ง interaction
         await interaction.response.send_modal(ObfuscationModal(interaction))
 
