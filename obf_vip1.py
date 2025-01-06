@@ -28,46 +28,55 @@ def rename_code(code):
     code = remove_docs(code)  # ลบ comment และ docstring ด้วยฟังก์ชันใหม่
     parsed = ast.parse(code)
 
-    # สร้าง dictionary สำหรับการแปลงชื่อ
+    # ค้นหาฟังก์ชัน, คลาส และอาร์กิวเมนต์ในโค้ด
     funcs = {node for node in ast.walk(parsed) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
     classes = {node for node in ast.walk(parsed) if isinstance(node, ast.ClassDef)}
     args = {node.id for node in ast.walk(parsed) if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load)}
 
-    # ทำการเปลี่ยนชื่อให้กับฟังก์ชัน
+    # เปลี่ยนชื่อฟังก์ชัน
     for func in funcs:
-        newname = "".join(random.choice(["I", "l"]) for _ in range(random.randint(8, 20)))
+        newname = generate_random_name()
         while newname in used:
-            newname = "".join(random.choice(["I", "l"]) for _ in range(random.randint(8, 20)))
+            newname = generate_random_name()
         used.add(newname)
         pairs[func.name] = newname
 
-    # ทำการเปลี่ยนชื่อให้กับคลาส
+    # เปลี่ยนชื่อคลาส
     for _class in classes:
-        newname = "".join(random.choice(["I", "l"]) for _ in range(random.randint(8, 20)))
+        newname = generate_random_name()
         while newname in used:
-            newname = "".join(random.choice(["I", "l"]) for _ in range(random.randint(8, 20)))
+            newname = generate_random_name()
         used.add(newname)
         pairs[_class.name] = newname
 
-    # ทำการเปลี่ยนชื่อให้กับอาร์กิวเมนต์
+    # เปลี่ยนชื่ออาร์กิวเมนต์
     for arg in args:
-        newname = "".join(random.choice(["I", "l"]) for _ in range(random.randint(8, 20)))
+        newname = generate_random_name()
         while newname in used:
-            newname = "".join(random.choice(["I", "l"]) for _ in range(random.randint(8, 20)))
+            newname = generate_random_name()
         used.add(newname)
         pairs[arg] = newname
 
-    # ใช้ regex เพื่อแทนที่ชื่อเดิมด้วยชื่อใหม่ในโค้ด
+    # แทนที่ชื่อเดิมในโค้ด
     for key, value in pairs.items():
         code = re.sub(r"\b" + re.escape(key) + r"\b", value, code)
 
+    # แทนที่ชื่อที่เป็นสตริงในข้อความต่างๆ (เช่น ใน print หรือ ในลิสต์)
+    for key, value in pairs.items():
+        code = re.sub(r"(\b" + re.escape(key) + r"\b)", value, code)
+
     return code
 
+def generate_random_name():
+    """
+    ฟังก์ชันสำหรับสุ่มชื่อใหม่ที่ประกอบด้วยตัวอักษร 'I' และ 'l' ขนาดระหว่าง 8 ถึง 20 ตัว
+    """
+    return "".join(random.choice(["I", "l"]) for _ in range(random.randint(8, 20)))
 
-# ฟังก์ชันสำหรับลบ docstring และ comment
 def remove_docs(source):
     """
     ลบ docstring และ comment ออกจากโค้ด Python
+    โดยจะจัดการกับภาษาไทยใน docstring และคอมเมนต์ด้วย
     """
     try:
         # ใช้ ast เพื่อจัดการ docstring
@@ -77,8 +86,13 @@ def remove_docs(source):
                 node.body = [stmt for stmt in node.body if not isinstance(stmt, ast.Expr) or not isinstance(stmt.value, ast.Str)]
         source = ast.unparse(parsed)  # แปลงกลับเป็น source code
 
-        # ลบ comment ด้วย regex
+        # ลบ comment ด้วย regex (คอมเมนต์ภาษาไทยก็จะถูกลบ)
         source = re.sub(r"#.*", "", source)  # ลบ comment ทั้งบรรทัดที่เริ่มต้นด้วย #
+        
+        # จัดการ docstring ภาษาไทย (หากมีการใช้ข้อความภาษาไทยใน docstring)
+        source = re.sub(r'"""(.*?)"""', '', source, flags=re.DOTALL)
+        source = re.sub(r"'''(.*?)'''", '', source, flags=re.DOTALL)
+        
         return source
     except Exception as e:
         print(f"เกิดข้อผิดพลาดในการลบ docstring: {e}")
