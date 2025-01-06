@@ -132,7 +132,7 @@ class ObfuscationView(discord.ui.View):
         if user_id not in usage_data:
             usage_data[user_id] = {"count": 0, "last_used": ""}
           
-            await interaction.response.send_modal(ObfuscationModal(self.ctx, group_id, user_id))
+        await interaction.response.send_modal(ObfuscationModal(self.ctx, group_id, user_id))
         
 
 class ObfuscationFreeModal(discord.ui.Modal):
