@@ -70,9 +70,16 @@ def generate_random_name():
     # ใช้เวลาปัจจุบันเพื่อให้ชื่อแตกต่างไปในแต่ละครั้ง
     random.seed(time.time())
     
-    length = random.randint(12, 24)  # ความยาวระหว่าง 12 ถึง 24 ตัว
-    chars = string.ascii_letters + string.digits + "!@#$%^&*()-_+=<>?"
-    return ''.join(random.choice(chars) for _ in range(length))
+    length = random.randint(16, 32)  # ความยาวระหว่าง 16 ถึง 32 ตัว
+    chars = string.ascii_letters + string.digits + "!@#$%^&*()-_+=<>?[]{}|\\:;,.~"
+    
+    # สุ่มลำดับของตัวอักษร, ตัวเลข, และอักขระพิเศษ
+    random_name = ''.join(random.choice(chars) for _ in range(length))
+    
+    # เพิ่มความยากขึ้นอีกด้วยการแทรกตัวอักษรพิมพ์ใหญ่/พิมพ์เล็กแบบสุ่มในแต่ละตำแหน่ง
+    random_name = ''.join(random.choice([c.lower(), c.upper()]) if c.isalpha() else c for c in random_name)
+    
+    return random_name
 
 def remove_docs(source):
     """
