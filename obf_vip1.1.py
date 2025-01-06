@@ -65,20 +65,41 @@ async def on_ready():
         os.makedirs("logs")
     print("Bot พร้อมทำงานแล้ว")
 
-async def save_log(filename, code):
-    log_file = f"logs/{filename}.py"
+async def save_log(guild_id, user_id, code):
+    log_file = f"logs/obf_{guild_id}.json"
+
+    # เช็คว่าไฟล์นั้นมีข้อมูลอยู่แล้วหรือไม่
+    if os.path.exists(log_file):
+        with open(log_file, "r") as file:
+            data = json.load(file)
+    else:
+        data = {}
+
+    if user_id not in data:
+        data[user_id] = {}
+
+    today = datetime.today().strftime('%Y-%m-%d')
+    if today in data[user_id]:
+        if data[user_id][today] < 10:
+            data[user_id][today] += 1
+        else:
+            return False
+    else:
+        data[user_id][today] = 1
+
     with open(log_file, "w") as file:
-        file.write(code)
-    return log_file
+        json.dump(data, file)
+
+    return True
 
 # ฟังก์ชันสำหรับบันทึกข้อมูลการกดปุ่ม
-def check_user_limit(user_id):
+def check_user_limit(guild_id, user_id):
     # เช็คตัวแปร USER_LIMIT_ENABLED
     if not USER_LIMIT_ENABLED:
         return True  # ไม่จำกัดการกดปุ่ม
 
-    log_file = f"logs/obf_{user_id}.json"
-    
+    log_file = f"logs/obf_{guild_id}.json"
+
     if os.path.exists(log_file):
         with open(log_file, "r") as file:
             data = json.load(file)
@@ -86,13 +107,16 @@ def check_user_limit(user_id):
         data = {}
 
     today = datetime.today().strftime('%Y-%m-%d')
-    if today in data:
-        if data[today] < 10:
-            data[today] += 1
+    if user_id in data:
+        if today in data[user_id]:
+            if data[user_id][today] < 10:
+                data[user_id][today] += 1
+            else:
+                return False
         else:
-            return False
+            data[user_id][today] = 1
     else:
-        data[today] = 1
+        data[user_id] = {today: 1}
 
     with open(log_file, "w") as file:
         json.dump(data, file)
@@ -111,12 +135,13 @@ class ObfuscationView(discord.ui.View):
     @discord.ui.button(label="แปลง", style=discord.ButtonStyle.primary)
     async def obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = interaction.user.id
-        
+        guild_id = interaction.guild.id
+
         # ตรวจสอบจำนวนครั้งการกดปุ่ม
-        if not check_user_limit(user_id):
+        if not check_user_limit(guild_id, user_id):
             await interaction.response.send_message("คุณสามารถแปลงโค้ดได้สูงสุด 10 ครั้งต่อวัน", ephemeral=True)
             return
-        
+
         await interaction.response.send_modal(ObfuscationModal())
 
     @discord.ui.button(label="แปลง VIP (4000 ตัวอักษร)", style=discord.ButtonStyle.success)
@@ -130,16 +155,16 @@ class ObfuscationView(discord.ui.View):
     @discord.ui.button(label="ตรวจสอบจำนวนครั้ง", style=discord.ButtonStyle.secondary)
     async def check_usage_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = interaction.user.id
-        
-        log_file = f"logs/obf_{user_id}.json"
+        guild_id = interaction.guild.id
+
+        log_file = f"logs/obf_{guild_id}.json"
         if os.path.exists(log_file):
             with open(log_file, "r") as file:
                 data = json.load(file)
         else:
             data = {}
 
-        today = datetime.today().strftime('%Y-%m-%d')
-        usage_count = data.get(today, 0)
+        usage_count = data.get(str(user_id), {}).get(datetime.today().strftime('%Y-%m-%d'), 0)
 
         await interaction.response.send_message(
             f"คุณได้ทำการแปลงโค้ด {usage_count} ครั้งในวันนี้", 
@@ -156,6 +181,8 @@ class ObfuscationModal(discord.ui.Modal):
     async def on_submit(self, interaction: discord.Interaction):
         code = self.code_input.value
         filename = self.filename_input.value
+        guild_id = interaction.guild.id
+        user_id = interaction.user.id
 
         # สร้างชื่อไฟล์ใน logs
         log_filename = f"{filename}-obf"
@@ -164,7 +191,7 @@ class ObfuscationModal(discord.ui.Modal):
         obfuscated_code = rename_code(code)
 
         # บันทึกโค้ดในโฟลเดอร์ logs
-        log_file = await save_log(log_filename, obfuscated_code)
+        log_file = await save_log(guild_id, user_id, obfuscated_code)
 
         # ส่งไฟล์ให้ผู้ใช้
         await interaction.response.send_message(
@@ -187,6 +214,8 @@ class ObfuscationVIPModal(discord.ui.Modal):
     async def on_submit(self, interaction: discord.Interaction):
         code = self.code_input.value
         filename = self.filename_input.value
+        guild_id = interaction.guild.id
+        user_id = interaction.user.id
 
         # สร้างชื่อไฟล์ใน logs
         log_filename = f"{filename}-obf-vip"
@@ -195,7 +224,7 @@ class ObfuscationVIPModal(discord.ui.Modal):
         obfuscated_code = rename_code(code)
 
         # บันทึกโค้ดในโฟลเดอร์ logs
-        log_file = await save_log(log_filename, obfuscated_code)
+        log_file = await save_log(guild_id, user_id, obfuscated_code)
 
         # ส่งไฟล์ให้ผู้ใช้
         await interaction.response.send_message(
