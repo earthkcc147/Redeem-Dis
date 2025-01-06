@@ -1,4 +1,5 @@
 #. OK จำนวน -1 ต่อครัง ฟรี10/วัน
+# รอเพอ่มปถ่มกดเติมเงิน
 
 import discord
 from discord.ext import commands
@@ -61,7 +62,7 @@ class GiftLinkModal(discord.ui.Modal):
     def __init__(self, group_id):
         super().__init__(title="กรอกลิ้งซองของขวัญ")
         self.group_id = group_id
-        self.gift_link = TextInput(label="Gift Link", placeholder="ใส่ลิ้งซองของขวัญที่นี่", required=True)
+        self.gift_link = discord.ui.TextInput(label="Gift Link", placeholder="ใส่ลิ้งซองของขวัญที่นี่", required=True)
         self.add_item(self.gift_link)
 
     async def on_submit(self, interaction: discord.Interaction):
@@ -84,29 +85,18 @@ class GiftLinkModal(discord.ui.Modal):
         if result["status"] == "success":
             message = f"สำเร็จ! จำนวนเงิน: {result['amount']} บาท\nเบอร์รับเงิน: {result['phone']}\nลิ้งซองของขวัญ: {result['gift_link']}\nเวลาทำรายการ: {result['time']}"
 
-            # อ่านข้อมูลสมาชิกจากไฟล์
-            user_data = load_data_balance(self.group_id)
+            # อัพเดตจำนวน normal_count ของผู้ใช้
             user_id = str(interaction.user.id)  # ใช้ user id ของ Discord เป็น key
+            amount = float(result['amount'])
+            normal_count_increment = int(amount // 10)  # เพิ่ม 1 normal_count ต่อการเติมเงิน 10 บาท
 
-            # ถ้าผู้ใช้ไม่เคยมีข้อมูลในไฟล์ ให้สร้างข้อมูลใหม่
-            if user_id not in user_data:
-                user_data[user_id] = {"balance": 0.0, "history": []}
+            usage_data = load_usage_data(self.group_id)
 
-            # อัพเดตยอดเงินของผู้ใช้
-            user_data[user_id]["balance"] += float(result['amount'])
+            if user_id not in usage_data:
+                usage_data[user_id] = {"free_count": 3, "normal_count": 0, "last_used": ""}
 
-            # บันทึกประวัติการทำรายการ
-            transaction = {
-                "amount": result['amount'],
-                "gift_link": result['gift_link'],
-                "time": result['time'],
-                "status": result['status'],
-                "phone": result['phone']
-            }
-            user_data[user_id]["history"].append(transaction)
-
-            # บันทึกข้อมูลลงไฟล์
-            save_data_balance(user_data, self.group_id)
+            usage_data[user_id]["normal_count"] += normal_count_increment  # เพิ่มจำนวน normal_count
+            save_usage_data(self.group_id, usage_data)  # บันทึกข้อมูลจำนวนครั้งที่สามารถกดได้
 
             # ส่งข้อความไปยังช่องที่ต้องการ
             channel = client.get_channel(channel_id)
@@ -117,7 +107,7 @@ class GiftLinkModal(discord.ui.Modal):
                     f"เบอร์รับเงิน: {result['phone']}\n"
                     f"ลิ้งซองของขวัญ: {result['gift_link']}\n"
                     f"เวลาทำรายการ: {result['time']}\n"
-                    f"ยอดเงินรวมของ {interaction.user.name}: {user_data[user_id]['balance']} บาท"
+                    f"จำนวน normal_count ที่ได้รับ: {normal_count_increment} ครั้ง"
                 )
         else:
             message = f"ผิดพลาด: {result['message']}"
