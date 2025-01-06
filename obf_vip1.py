@@ -119,13 +119,22 @@ class ObfuscationView(discord.ui.View):
 
 
 class ObfuscationModal(discord.ui.Modal):
-    def __init__(self):
+    def __init__(self, guild_id):
         super().__init__(title="กรุณากรอกโค้ด Python")
+        self.guild_id = guild_id
 
     code_input = discord.ui.TextInput(label="โค้ด Python", style=discord.TextStyle.paragraph, placeholder="กรอกโค้ดที่ต้องการเข้ารหัส", required=True, max_length=2000)
     filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
 
     async def on_submit(self, interaction: discord.Interaction):
+        # ตรวจสอบจำนวนครั้ง
+        if not check_user_limit(interaction.guild.id, interaction.user.id):
+            await interaction.response.send_message(
+                "❌ คุณได้ใช้สิทธิ์การเข้ารหัสครบ 10 ครั้งในวันนี้แล้ว กรุณารอวันถัดไป",
+                ephemeral=True
+            )
+            return
+
         code = self.code_input.value
         filename = self.filename_input.value
 
@@ -148,6 +157,7 @@ class ObfuscationModal(discord.ui.Modal):
         # ลบไฟล์หลังส่ง
         if os.path.exists(log_file):
             os.remove(log_file)
+
 
 class ObfuscationVIPModal(discord.ui.Modal):
     def __init__(self):
