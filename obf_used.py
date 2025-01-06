@@ -127,19 +127,9 @@ class ObfuscationView(discord.ui.View):
 
         if user_id not in usage_data:
             usage_data[user_id] = {"count": 0, "last_used": ""}
-
-        if usage_data[user_id]['count'] > 0:
-            # ลดจำนวนครั้งลง 1
-            # usage_data[user_id]['count'] -= 1
-            # save_usage_data(group_id, usage_data)
-
-            await interaction.response.send_modal(ObfuscationModal())
-        else:
-            await interaction.response.send_message(
-                "คุณไม่สามารถแปลงโค้ดได้แล้ว เนื่องจากคุณหมดจำนวนครั้งที่สามารถใช้งานได้",
-                ephemeral=True
-            )
-
+          
+            await interaction.response.send_modal(ObfuscationModal(self.ctx, group_id, user_id))
+        
 
 # ฟังก์ชันที่เรียกใช้เมื่อมีการกดปุ่มแปลงฟรี
 class ObfuscationFreeModal(discord.ui.Modal):
@@ -203,34 +193,41 @@ class ObfuscationModal(discord.ui.Modal):
     filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
 
     async def on_submit(self, interaction: discord.Interaction):
-        code = self.code_input.value
-        filename = self.filename_input.value
-
-        # เข้ารหัสโค้ด
-        obfuscated_code = rename_code(code)
-
-        # สร้างชื่อไฟล์ใน logs
-        log_filename = f"{filename}-obf"
-        
-        # บันทึกโค้ดในโฟลเดอร์ logs
-        log_file = await save_log(log_filename, obfuscated_code)
-
-        # ลดจำนวนครั้งการใช้งานหลังการแปลง
+        # โหลดข้อมูลการใช้งานจากไฟล์
         usage_data = load_usage_data(self.group_id)
-        if self.user_id in usage_data:
+
+        # ตรวจสอบจำนวนครั้งที่เหลือ
+        if usage_data[self.user_id]['count'] > 0:
+            # ลดจำนวนครั้งการใช้งาน
             usage_data[self.user_id]['count'] -= 1
             save_usage_data(self.group_id, usage_data)
 
-        # ส่งไฟล์ให้ผู้ใช้
-        await interaction.response.send_message(
-            file=discord.File(log_file),
-            content=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
-            ephemeral=True
-        )
+            # เข้ารหัสโค้ด
+            code = self.code_input.value
+            filename = self.filename_input.value
+            obfuscated_code = rename_code(code)
 
-        # ลบไฟล์หลังส่ง
-        if os.path.exists(log_file):
-            os.remove(log_file)
+            # สร้างชื่อไฟล์ใน logs
+            log_filename = f"{filename}-obf"
+            log_file = await save_log(log_filename, obfuscated_code)
+
+            # ส่งไฟล์ให้ผู้ใช้
+            await interaction.response.send_message(
+                file=discord.File(log_file),
+                content=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
+                ephemeral=True
+            )
+
+            # ลบไฟล์หลังส่ง
+            if os.path.exists(log_file):
+                os.remove(log_file)
+
+        else:
+            # ถ้าหมดจำนวนครั้งการใช้งาน
+            await interaction.response.send_message(
+                "คุณไม่สามารถแปลงโค้ดได้แล้ว เนื่องจากคุณหมดจำนวนครั้งที่สามารถใช้งานได้",
+                ephemeral=True
+            )
 
 
 # เริ่มบอท
