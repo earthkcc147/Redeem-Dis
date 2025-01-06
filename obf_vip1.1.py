@@ -1,5 +1,4 @@
-# OK
-ฟรี 10 vip 100 ต่อวัน
+# OK ฟรี 10 vip 100 ต่อวัน
 
 
 import discord
