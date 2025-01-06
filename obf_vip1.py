@@ -224,10 +224,12 @@ class ObfuscationView(discord.ui.View):
         group_id = str(interaction.guild.id)
 
         if not check_user_limit(group_id, user_id):
-            await interaction.response.send_message(
-                "❌ คุณได้ใช้สิทธิ์การเข้ารหัสครบ 10 ครั้งในวันนี้แล้ว กรุณารอวันถัดไป",
-                ephemeral=True
+            embed = discord.Embed(
+                title="ข้อผิดพลาด",
+                description="❌ คุณได้ใช้สิทธิ์การเข้ารหัสครบ 10 ครั้งในวันนี้แล้ว กรุณารอวันถัดไป",
+                color=discord.Color.red()
             )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
             # นับจำนวนครั้งที่ผู้ใช้ใช้ไปแล้วในวันนี้
             log_file = f"logs/obf_{group_id}.json"
@@ -238,15 +240,19 @@ class ObfuscationView(discord.ui.View):
                     user_data = data.get(str(user_id), {})
                     used_count = user_data.get(today, 0)
 
-                    await interaction.response.send_message(
-                        f"✅ คุณได้ใช้สิทธิ์การเข้ารหัสไปแล้ว {used_count} ครั้งในวันนี้.",
-                        ephemeral=True
+                    embed = discord.Embed(
+                        title="จำนวนครั้งที่ใช้",
+                        description=f"✅ คุณได้ใช้สิทธิ์การเข้ารหัสไปแล้ว {used_count} ครั้งในวันนี้.",
+                        color=discord.Color.green()
                     )
+                    await interaction.response.send_message(embed=embed, ephemeral=True)
             else:
-                await interaction.response.send_message(
-                    "✅ คุณยังไม่ได้ใช้สิทธิ์การเข้ารหัสในวันนี้.",
-                    ephemeral=True
+                embed = discord.Embed(
+                    title="ข้อมูลการเข้ารหัส",
+                    description="✅ คุณยังไม่ได้ใช้สิทธิ์การเข้ารหัสในวันนี้.",
+                    color=discord.Color.blue()
                 )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 class ObfuscationModal(discord.ui.Modal):
