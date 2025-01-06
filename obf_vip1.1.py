@@ -1,4 +1,5 @@
 # OK
+ฟรี 10 vip 100
 
 
 import discord
