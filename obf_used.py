@@ -172,14 +172,6 @@ class ObfuscationModal(discord.ui.Modal):
         if os.path.exists(log_file):
             os.remove(log_file)
 
-        # หากยังไม่มีข้อมูลการใช้งานให้สร้างข้อมูลในไฟล์
-        group_id = str(interaction.guild.id)
-        user_id = str(interaction.user.id)
-        usage_data = load_usage_data(group_id)
-
-        if user_id not in usage_data:
-            usage_data[user_id] = {"count": 1, "last_used": datetime.today().strftime('%Y-%m-%d')}
-            save_usage_data(group_id, usage_data)
 
 # เริ่มบอท
 bot.run('YOUR_DISCORD_BOT_TOKEN')
