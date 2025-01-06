@@ -7,6 +7,8 @@ import io
 import random
 import re
 import ast
+import string
+import time
 import os
 from datetime import datetime
 import json
@@ -63,9 +65,14 @@ def rename_code(code):
 
 def generate_random_name():
     """
-    ฟังก์ชันสำหรับสุ่มชื่อใหม่ที่ประกอบด้วยตัวอักษร 'I' และ 'l' ขนาดระหว่าง 8 ถึง 20 ตัว
+    ฟังก์ชันสำหรับสุ่มชื่อใหม่ที่ยากขึ้น โดยใช้ตัวอักษร, ตัวเลข, และอักขระพิเศษ
     """
-    return "".join(random.choice(["I", "l"]) for _ in range(random.randint(8, 20)))
+    # ใช้เวลาปัจจุบันเพื่อให้ชื่อแตกต่างไปในแต่ละครั้ง
+    random.seed(time.time())
+    
+    length = random.randint(12, 24)  # ความยาวระหว่าง 12 ถึง 24 ตัว
+    chars = string.ascii_letters + string.digits + "!@#$%^&*()-_+=<>?"
+    return ''.join(random.choice(chars) for _ in range(length))
 
 def remove_docs(source):
     """
