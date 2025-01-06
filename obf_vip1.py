@@ -14,7 +14,10 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 # ตัวแปรสำหรับเปิด/ปิดการจำกัดจำนวนครั้ง
 USER_LIMIT_ENABLED = True  # เปลี่ยนเป็น False เพื่อปิดการจำกัดจำนวนครั้งการกดส่งใน แปลง
+USER_LIMIT_PER_DAY = 10    # จำนวนครั้งต่อวันสำหรับผู้ใช้ทั่วไป
+
 VIP_LIMIT_ENABLED = True  # เปลี่ยนเป็น False เพื่อปิดการจำกัดการกดส่งใน VIP
+VIP_LIMIT_PER_DAY = 100    # จำนวนครั้งต่อวันสำหรับ VIP
 
 # ฟังก์ชันสำหรับเข้ารหัสโค้ด
 def rename_code(code):
@@ -91,7 +94,7 @@ def check_user_limit(guild_id, user_id):
 
     today = datetime.today().strftime('%Y-%m-%d')
     if today in data[user_id]:
-        if data[user_id][today] < 10:
+        if data[user_id][today] < USER_LIMIT_PER_DAY:
             data[user_id][today] += 1
         else:
             return False
@@ -121,7 +124,7 @@ def check_vip_limit(guild_id, user_id):
 
     today = datetime.today().strftime('%Y-%m-%d')
     if today in data[user_id]:
-        if data[user_id][today] < 100:
+        if data[user_id][today] < VIP_LIMIT_PER_DAY:
             data[user_id][today] += 1
         else:
             return False
