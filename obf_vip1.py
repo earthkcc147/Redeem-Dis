@@ -65,21 +65,9 @@ def rename_code(code):
 
 def generate_random_name():
     """
-    ฟังก์ชันสำหรับสุ่มชื่อใหม่ที่ยากขึ้น โดยใช้ตัวอักษร, ตัวเลข, และอักขระพิเศษ
+    ฟังก์ชันสำหรับสุ่มชื่อใหม่ที่ประกอบด้วยตัวอักษร 'I' และ 'l' ขนาดระหว่าง 8 ถึง 20 ตัว
     """
-    # ใช้เวลาปัจจุบันเพื่อให้ชื่อแตกต่างไปในแต่ละครั้ง
-    random.seed(time.time())
-    
-    length = random.randint(16, 32)  # ความยาวระหว่าง 16 ถึง 32 ตัว
-    chars = string.ascii_letters + string.digits + "!@#$%^&*()-_+=<>?[]{}|\\:;,.~"
-    
-    # สุ่มลำดับของตัวอักษร, ตัวเลข, และอักขระพิเศษ
-    random_name = ''.join(random.choice(chars) for _ in range(length))
-    
-    # เพิ่มความยากขึ้นอีกด้วยการแทรกตัวอักษรพิมพ์ใหญ่/พิมพ์เล็กแบบสุ่มในแต่ละตำแหน่ง
-    random_name = ''.join(random.choice([c.lower(), c.upper()]) if c.isalpha() else c for c in random_name)
-    
-    return random_name
+    return "".join(random.choice(["I", "l"]) for _ in range(random.randint(8, 20)))
 
 def remove_docs(source):
     """
@@ -105,7 +93,6 @@ def remove_docs(source):
     except Exception as e:
         print(f"เกิดข้อผิดพลาดในการลบ docstring: {e}")
         return source
-
 
 
 def check_user_limit(guild_id, user_id):
