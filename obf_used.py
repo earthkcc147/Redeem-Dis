@@ -93,21 +93,17 @@ def save_usage_data(group_id, data):
 
 
 # ฟังก์ชันสำหรับตรวจสอบการใช้งานในวันนี้และจำนวนครั้งที่เหลือ
-def can_use_today(usage_data, user_id):
+def can_use_today(usage_data, user_id, group_id):
     today = datetime.today().strftime('%Y-%m-%d')
-    
-    # ตรวจสอบว่าผู้ใช้มีข้อมูลหรือไม่ ถ้าไม่มีให้สร้างข้อมูลเริ่มต้น
     if user_id not in usage_data:
         usage_data[user_id] = {"count": free_obfuscate_limit, "last_used": ""}
 
-    # ถ้าผู้ใช้ยังไม่เคยใช้ในวันนี้
     if usage_data[user_id]['last_used'] != today:
-        # รีเซ็ตจำนวนครั้งการใช้งานให้เป็นค่าเริ่มต้น
+        # ถ้ายังไม่เคยใช้ในวันนี้ ให้รีเซ็ตจำนวนครั้ง
         usage_data[user_id]['count'] = free_obfuscate_limit
         usage_data[user_id]['last_used'] = today
         save_usage_data(group_id, usage_data)
 
-    # ตรวจสอบจำนวนครั้งที่ผู้ใช้สามารถใช้งานได้
     if usage_data[user_id]['count'] > 0:
         return True  # สามารถใช้งานได้
     return False
