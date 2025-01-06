@@ -141,6 +141,7 @@ async def obf(ctx):
 class ObfuscationView(discord.ui.View):
     def __init__(self):
         super().__init__()
+        self.add_item(discord.ui.Button(label="จ้างทำบอท", style=discord.ButtonStyle.link, url="https://www.facebook.com/yourprofile"))
 
     @discord.ui.button(label="แปลง", style=discord.ButtonStyle.primary)
     async def obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -166,10 +167,7 @@ class ObfuscationView(discord.ui.View):
 
         await interaction.response.send_modal(ObfuscationVIPModal())
 
-    @discord.ui.button(label="จ้างทำบอท", style=discord.ButtonStyle.link, url="https://www.facebook.com/yourprofile")
-    async def hire_bot_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # เมื่อกดปุ่มจะเปิดลิงก์โดยอัตโนมัติ
-        pass
+    
 
     @discord.ui.button(label="ตรวจสอบจำนวนครั้ง", style=discord.ButtonStyle.secondary)
     async def check_usage_button(self, interaction: discord.Interaction, button: discord.ui.Button):
