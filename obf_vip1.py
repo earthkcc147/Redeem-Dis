@@ -247,7 +247,10 @@ class ObfuscationView(discord.ui.View):
         user_id = interaction.user.id
         group_id = str(interaction.guild.id)
 
-        if not check_user_limit(group_id, user_id):
+        # ใช้ฟังก์ชัน get_user_usage_count เพื่อดึงข้อมูลจำนวนครั้งที่ใช้ไปแล้วในวันนี้
+        used_count = get_user_usage_count(group_id, user_id)
+
+        if used_count >= 10:
             embed = discord.Embed(
                 title="ข้อผิดพลาด",
                 description="❌ คุณได้ใช้สิทธิ์การเข้ารหัสครบ 10 ครั้งในวันนี้แล้ว กรุณารอวันถัดไป",
@@ -255,28 +258,12 @@ class ObfuscationView(discord.ui.View):
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
-            # นับจำนวนครั้งที่ผู้ใช้ใช้ไปแล้วในวันนี้
-            log_file = f"logs/obf_{group_id}.json"
-            if os.path.exists(log_file):
-                with open(log_file, "r") as file:
-                    data = json.load(file)
-                    today = datetime.today().strftime('%Y-%m-%d')
-                    user_data = data.get(str(user_id), {})
-                    used_count = user_data.get(today, 0)
-
-                    embed = discord.Embed(
-                        title="จำนวนครั้งที่ใช้",
-                        description=f"✅ คุณได้ใช้สิทธิ์การเข้ารหัสไปแล้ว {used_count} ครั้งในวันนี้.",
-                        color=discord.Color.green()
-                    )
-                    await interaction.response.send_message(embed=embed, ephemeral=True)
-            else:
-                embed = discord.Embed(
-                    title="ข้อมูลการเข้ารหัส",
-                    description="✅ คุณยังไม่ได้ใช้สิทธิ์การเข้ารหัสในวันนี้.",
-                    color=discord.Color.blue()
-                )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+            embed = discord.Embed(
+                title="จำนวนครั้งที่ใช้",
+                description=f"✅ คุณได้ใช้สิทธิ์การเข้ารหัสไปแล้ว {used_count} ครั้งในวันนี้.",
+                color=discord.Color.green()
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 class ObfuscationModal(discord.ui.Modal):
