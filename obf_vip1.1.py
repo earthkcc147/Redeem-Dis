@@ -13,8 +13,8 @@ intents = discord.Intents.all()  # ใช้ all intents
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # ตัวแปรสำหรับเปิด/ปิดการจำกัดจำนวนครั้ง
-USER_LIMIT_ENABLED = True  # เปลี่ยนเป็น False เพื่อปิดการจำกัดจำนวนครั้ง
-VIP_LIMIT_ENABLED = True  # เปลี่ยนเป็น False เพื่อปิดการจำกัดการกดปุ่ม VIP
+USER_LIMIT_ENABLED = True  # เปลี่ยนเป็น False เพื่อปิดการจำกัดจำนวนครั้งการกดส่งใน แปลง
+VIP_LIMIT_ENABLED = True  # เปลี่ยนเป็น False เพื่อปิดการจำกัดการกดส่งใน VIP
 
 # ฟังก์ชันสำหรับเข้ารหัสโค้ด
 def rename_code(code):
