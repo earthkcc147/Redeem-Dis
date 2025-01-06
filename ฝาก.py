@@ -1,3 +1,7 @@
+import random
+import ast
+import re
+
 # ฟังก์ชันสำหรับเข้ารหัสโค้ด
 def rename_code(code):
     pairs = {}
@@ -71,7 +75,19 @@ def remove_docs(source):
         print(f"เกิดข้อผิดพลาดในการลบ docstring: {e}")
         return source
 
+# ตัวอย่างการใช้ฟังก์ชัน
+code = '''
+def example_function(arg1, arg2):
+    # นี่คือลายละเอียด
+    return arg1 + arg2
 
+class MyClass:
+    def __init__(self, name):
+        self.name = name
 
+    def greet(self):
+        print(f"Hello, {self.name}")
+'''
 
-เพิ่มการเข้ารหัสให้ยากและละเอียดขึ้นไปอีก
+encoded_code = rename_code(code)
+print(encoded_code)
