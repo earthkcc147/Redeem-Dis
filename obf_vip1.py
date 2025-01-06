@@ -353,6 +353,8 @@ class ObfuscationView(discord.ui.View):
 
     @discord.ui.button(label="เติมเงิน", style=discord.ButtonStyle.primary)
     async def gift_link_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # ตรวจสอบว่าโฟลเดอร์และไฟล์มีอยู่แล้วหรือไม่ ถ้าไม่ให้สร้าง
+        load_data(str(interaction.guild.id))  # จะทำให้โฟลเดอร์และไฟล์ถูกสร้างขึ้นถ้ายังไม่มี
         # เปิด Modal สำหรับกรอก Gift Link
         await interaction.response.send_modal(GiftLinkModal(group_id=str(interaction.guild.id)))
     
