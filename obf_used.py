@@ -93,19 +93,25 @@ def save_usage_data(group_id, data):
 
 
 # ฟังก์ชันสำหรับตรวจสอบการใช้งานในวันนี้และจำนวนครั้งที่เหลือ
-def can_use_today(usage_data, user_id, group_id):
+def can_use_today(usage_data, user_id, group_id, is_free=False):
     today = datetime.today().strftime('%Y-%m-%d')
     if user_id not in usage_data:
-        usage_data[user_id] = {"count": free_obfuscate_limit, "last_used": ""}
-
-    if usage_data[user_id]['last_used'] != today:
-        # ถ้ายังไม่เคยใช้ในวันนี้ ให้รีเซ็ตจำนวนครั้ง
-        usage_data[user_id]['count'] = free_obfuscate_limit
+        # ถ้าผู้ใช้ไม่เคยใช้งาน ให้ตั้งค่าเริ่มต้น
+        usage_data[user_id] = {"free_count": free_obfuscate_limit, "normal_count": 0, "last_used": ""}
+    
+    # หากต้องการรีเซ็ตการใช้งานแปลงฟรี
+    if is_free and usage_data[user_id]['last_used'] != today:
+        usage_data[user_id]['free_count'] = free_obfuscate_limit  # รีเซ็ตจำนวนแปลงฟรี
         usage_data[user_id]['last_used'] = today
         save_usage_data(group_id, usage_data)
 
-    if usage_data[user_id]['count'] > 0:
-        return True  # สามารถใช้งานได้
+    if is_free:
+        if usage_data[user_id]['free_count'] > 0:
+            return True  # สามารถใช้งานแปลงฟรีได้
+    else:
+        if usage_data[user_id]['normal_count'] >= 0:  # แปลงปกติไม่จำกัด
+            return True
+
     return False
 
 
@@ -144,37 +150,29 @@ class ObfuscationFreeModal(discord.ui.Modal):
     filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
 
     async def on_submit(self, interaction: discord.Interaction):
-        group_id = str(self.ctx.guild.id)  # แก้ไขที่นี่
+        group_id = str(self.ctx.guild.id)
         user_id = str(interaction.user.id)
         usage_data = load_usage_data(group_id)
 
-        # ตรวจสอบการใช้งานในวันนี้
-        if can_use_today(usage_data, user_id, group_id):  # ส่ง group_id ด้วยที่นี่
-            # บันทึกวันที่ที่ใช้แปลงและลดจำนวนการใช้งาน
-            usage_data[user_id]['count'] -= 1  # ลดจำนวนการใช้งาน
+        if can_use_today(usage_data, user_id, group_id, is_free=True):  # ส่ง is_free=True สำหรับแปลงฟรี
+            usage_data[user_id]['free_count'] -= 1  # ลดจำนวนการใช้งานแปลงฟรี
             save_usage_data(group_id, usage_data)
 
-            # ดำเนินการแปลงโค้ด
             code = self.code_input.value
             filename = self.filename_input.value
 
             # เข้ารหัสโค้ด
             obfuscated_code = rename_code(code)
 
-            # สร้างชื่อไฟล์ใน logs
             log_filename = f"{filename}-obf"
-
-            # บันทึกโค้ดในโฟลเดอร์ logs
             log_file = await save_log(log_filename, obfuscated_code)
 
-            # ส่งไฟล์ให้ผู้ใช้
             await interaction.response.send_message(
                 file=discord.File(log_file),
                 content=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
                 ephemeral=True
             )
 
-            # ลบไฟล์หลังส่ง
             if os.path.exists(log_file):
                 os.remove(log_file)
         else:
@@ -182,7 +180,6 @@ class ObfuscationFreeModal(discord.ui.Modal):
                 f"คุณสามารถแปลงโค้ดได้เพียง {free_obfuscate_limit} ครั้งต่อวันเท่านั้น กรุณาลองใหม่ในวันพรุ่งนี้",
                 ephemeral=True
             )
-
 
 
 class ObfuscationModal(discord.ui.Modal):
@@ -196,37 +193,29 @@ class ObfuscationModal(discord.ui.Modal):
     filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
 
     async def on_submit(self, interaction: discord.Interaction):
-        # โหลดข้อมูลการใช้งานจากไฟล์
         usage_data = load_usage_data(self.group_id)
 
-        # ตรวจสอบจำนวนครั้งที่เหลือ
-        if usage_data[self.user_id]['count'] > 0:
-            # ลดจำนวนครั้งการใช้งาน
-            usage_data[self.user_id]['count'] -= 1
+        # ตรวจสอบการใช้งานแปลงปกติ
+        if can_use_today(usage_data, self.user_id, self.group_id, is_free=False):
+            usage_data[self.user_id]['normal_count'] += 1  # เพิ่มจำนวนการใช้งานแปลงปกติ
             save_usage_data(self.group_id, usage_data)
 
-            # เข้ารหัสโค้ด
             code = self.code_input.value
             filename = self.filename_input.value
             obfuscated_code = rename_code(code)
 
-            # สร้างชื่อไฟล์ใน logs
             log_filename = f"{filename}-obf"
             log_file = await save_log(log_filename, obfuscated_code)
 
-            # ส่งไฟล์ให้ผู้ใช้
             await interaction.response.send_message(
                 file=discord.File(log_file),
                 content=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
                 ephemeral=True
             )
 
-            # ลบไฟล์หลังส่ง
             if os.path.exists(log_file):
                 os.remove(log_file)
-
         else:
-            # ถ้าหมดจำนวนครั้งการใช้งาน
             await interaction.response.send_message(
                 "คุณไม่สามารถแปลงโค้ดได้แล้ว เนื่องจากคุณหมดจำนวนครั้งที่สามารถใช้งานได้",
                 ephemeral=True
