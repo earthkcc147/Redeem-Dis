@@ -21,6 +21,121 @@ intents = discord.Intents.all()  # ใช้ all intents
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
+
+
+
+
+# ฟังก์ชันเพื่ออ่านข้อมูลจากไฟล์ JSON
+def load_data(group_id):
+    folder_path = "topup"
+    data_file = os.path.join(folder_path, f"{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
+
+    # ถ้าไฟล์ไม่พบ ให้สร้างไฟล์ใหม่และคืนค่าข้อมูลเริ่มต้น
+    if not os.path.exists(data_file):
+        # สร้างโฟลเดอร์ "topup" ถ้ายังไม่มี
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        # สร้างไฟล์ JSON ใหม่ด้วยข้อมูลเริ่มต้น
+        default_data = {}
+        with open(data_file, 'w', encoding='utf-8') as f:
+            json.dump(default_data, f, ensure_ascii=False, indent=4)
+        return default_data
+
+    # ถ้าไฟล์มีอยู่แล้วให้โหลดข้อมูลจากไฟล์
+    with open(data_file, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+# ฟังก์ชันเพื่อบันทึกข้อมูลลงในไฟล์ JSON
+def save_data(data, group_id):
+    folder_path = "topup"
+    # ตรวจสอบว่าโฟลเดอร์ topup มีอยู่หรือไม่ ถ้าไม่ให้สร้าง
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    data_file = os.path.join(folder_path, f"{group_id}.json")  # ตั้งชื่อไฟล์ตาม ID ของกลุ่ม
+    with open(data_file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+
+
+class GiftLinkModal(Modal):
+    def __init__(self, group_id):
+        super().__init__(title="กรอกลิ้งซองของขวัญ")
+        self.group_id = group_id
+        self.gift_link = TextInput(label="Gift Link", placeholder="ใส่ลิ้งซองของขวัญที่นี่", required=True)
+        self.add_item(self.gift_link)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # รับค่าจาก Modal
+        gift_link = self.gift_link.value
+        phone = "0841304874"  # เบอร์รับเงินที่กำหนด
+
+        # ส่งข้อมูลไปที่ API
+        api_url = "https://byshop.me/api/truewallet"
+        data = {
+            "action": "truewallet", 
+            "gift_link": gift_link,
+            "phone": phone
+        }
+
+        response = requests.post(api_url, data=data)
+        result = response.json()
+
+        # ตรวจสอบผลลัพธ์จาก API
+        if result["status"] == "success":
+            message = f"สำเร็จ! จำนวนเงิน: {result['amount']} บาท\nเบอร์รับเงิน: {result['phone']}\nลิ้งซองของขวัญ: {result['gift_link']}\nเวลาทำรายการ: {result['time']}"
+
+            # อ่านข้อมูลสมาชิกจากไฟล์
+            user_data = load_data(self.group_id)
+            user_id = str(interaction.user.id)  # ใช้ user id ของ Discord เป็น key
+
+            # ถ้าผู้ใช้ไม่เคยมีข้อมูลในไฟล์ ให้สร้างข้อมูลใหม่
+            if user_id not in user_data:
+                user_data[user_id] = {"balance": 0.0, "history": []}
+
+            # อัพเดตยอดเงินของผู้ใช้
+            user_data[user_id]["balance"] += float(result['amount'])
+
+            # บันทึกประวัติการทำรายการ
+            transaction = {
+                "amount": result['amount'],
+                "gift_link": result['gift_link'],
+                "time": result['time'],
+                "status": result['status'],
+                "phone": result['phone']
+            }
+            user_data[user_id]["history"].append(transaction)
+
+            # บันทึกข้อมูลลงไฟล์
+            save_data(user_data, self.group_id)
+
+            # ส่งข้อความไปยังช่องที่ต้องการ
+            channel = client.get_channel(channel_id)
+            if channel:
+                await channel.send(
+                    f"เติมเงินสำเร็จจาก {interaction.user.name}!\n"
+                    f"จำนวนเงิน: {result['amount']} บาท\n"
+                    f"เบอร์รับเงิน: {result['phone']}\n"
+                    f"ลิ้งซองของขวัญ: {result['gift_link']}\n"
+                    f"เวลาทำรายการ: {result['time']}\n"
+                    f"ยอดเงินรวมของ {interaction.user.name}: {user_data[user_id]['balance']} บาท"
+                )
+        else:
+            message = f"ผิดพลาด: {result['message']}"
+
+        # ส่งข้อความตอบกลับในช่องที่กดคำสั่ง
+        await interaction.response.send_message(message, ephemeral=True)
+
+
+
+
+
+
+
+
+
+
 # ฟังก์ชันสำหรับเข้ารหัสโค้ด
 def rename_code(code):
     pairs = {}
