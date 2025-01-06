@@ -197,7 +197,7 @@ class ObfuscationModal(discord.ui.Modal):
 
         # ตรวจสอบการใช้งานแปลงปกติ
         if can_use_today(usage_data, self.user_id, self.group_id, is_free=False):
-            usage_data[self.user_id]['normal_count'] += 1  # เพิ่มจำนวนการใช้งานแปลงปกติ
+            usage_data[self.user_id]['normal_count'] -= 1  # เพิ่มจำนวนการใช้งานแปลงปกติ
             save_usage_data(self.group_id, usage_data)
 
             code = self.code_input.value
