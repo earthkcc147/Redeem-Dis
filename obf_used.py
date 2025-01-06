@@ -1,4 +1,4 @@
-#. OK
+#. OK จำนวน -1 ต่อครัง
 
 import discord
 from discord.ext import commands
