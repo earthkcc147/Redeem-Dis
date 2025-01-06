@@ -162,9 +162,9 @@ class ObfuscationView(discord.ui.View):
         self.add_item(discord.ui.Button(label="จ้างทำบอท", style=discord.ButtonStyle.link, url="https://www.facebook.com/yourprofile"))
 
     @discord.ui.button(label="แปลง", style=discord.ButtonStyle.primary)
-    async def obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # เมื่อกดปุ่ม "แปลง"
-        await interaction.response.send_modal(ObfuscationModal(guild_id=interaction.guild.id))
+async def obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # เรียกใช้งาน ObfuscationModal โดยส่ง interaction
+        await interaction.response.send_modal(ObfuscationModal(interaction))
 
     @discord.ui.button(label="แปลง VIP (4000 ตัวอักษร)", style=discord.ButtonStyle.success)
     async def obfuscate_vip_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -173,16 +173,19 @@ class ObfuscationView(discord.ui.View):
 
 
 class ObfuscationModal(discord.ui.Modal):
-    def __init__(self, guild_id):
+    def __init__(self, interaction: discord.Interaction):
         super().__init__(title="กรุณากรอกโค้ด Python")
-        self.guild_id = str(interaction.guild.id) 
+        self.group_id = str(interaction.guild.id)  # รับ group_id จาก interaction
 
-    code_input = discord.ui.TextInput(label="โค้ด Python", style=discord.TextStyle.paragraph, placeholder="กรอกโค้ดที่ต้องการเข้ารหัส", required=True, max_length=2000)
-    filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
+    # ฟิลด์สำหรับกรอกโค้ดและชื่อไฟล์
+    code_input = discord.ui.TextInput(
+        label="โค้ด Python", style=discord.TextStyle.paragraph, placeholder="กรอกโค้ดที่ต้องการเข้ารหัส", required=True, max_length=2000)
+    filename_input = discord.ui.TextInput(
+        label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
 
     async def on_submit(self, interaction: discord.Interaction):
-        # ตรวจสอบจำนวนครั้ง
-        if not check_user_limit(interaction.guild.id, interaction.user.id):
+        # ตรวจสอบจำนวนครั้งการใช้งาน
+        if not check_user_limit(self.group_id, interaction.user.id):
             await interaction.response.send_message(
                 "❌ คุณได้ใช้สิทธิ์การเข้ารหัสครบ 10 ครั้งในวันนี้แล้ว กรุณารอวันถัดไป",
                 ephemeral=True
@@ -192,7 +195,7 @@ class ObfuscationModal(discord.ui.Modal):
         code = self.code_input.value
         filename = self.filename_input.value
 
-        # สร้างชื่อไฟล์ใน logs
+        # สร้างชื่อไฟล์ log
         log_filename = f"{filename}-obf"
 
         # เข้ารหัสโค้ด
