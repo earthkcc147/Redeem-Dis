@@ -166,9 +166,12 @@ class ObfuscationView(discord.ui.View):
         
         await interaction.response.send_modal(ObfuscationVIPModal())
 
-    @discord.ui.button(label="จ้างทำบอท", style=discord.ButtonStyle.link, url="https://www.facebook.com/yourprofile")  # ปรับลิงก์เป็นลิงก์ Facebook ของคุณ
+    @discord.ui.button(label="จ้างทำบอท", style=discord.ButtonStyle.link)
     async def hire_bot_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass  # ปุ่มนี้จะทำงานโดยการเปิดลิงก์ Facebook ของคุณ
+        # ปุ่มนี้จะทำการเปิดลิงก์ Facebook โดยอัตโนมัติ
+        await interaction.response.send_message("กำลังเปิดลิงก์ Facebook...", ephemeral=True)
+        # ลิงก์ที่ต้องการ
+        await interaction.followup.send("https://www.facebook.com/yourprofile", ephemeral=True)
 
     @discord.ui.button(label="ตรวจสอบจำนวนครั้ง", style=discord.ButtonStyle.secondary)
     async def check_usage_button(self, interaction: discord.Interaction, button: discord.ui.Button):
