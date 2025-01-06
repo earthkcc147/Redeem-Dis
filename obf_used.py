@@ -133,8 +133,8 @@ class ObfuscationView(discord.ui.View):
 
         if usage_data[user_id]['count'] > 0:
             # ลดจำนวนครั้งลง 1
-            usage_data[user_id]['count'] -= 1
-            save_usage_data(group_id, usage_data)
+            # usage_data[user_id]['count'] -= 1
+            # save_usage_data(group_id, usage_data)
 
             await interaction.response.send_modal(ObfuscationModal())
         else:
