@@ -146,35 +146,36 @@ class ObfuscationView(discord.ui.View):
     async def obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = interaction.user.id
         guild_id = interaction.guild.id
-        
+
         # ตรวจสอบจำนวนครั้งการกดปุ่ม
         if not check_user_limit(guild_id, user_id):
             await interaction.response.send_message("คุณสามารถแปลงโค้ดได้สูงสุด 10 ครั้งต่อวัน", ephemeral=True)
             return
-        
+
         await interaction.response.send_modal(ObfuscationModal())
 
     @discord.ui.button(label="แปลง VIP (4000 ตัวอักษร)", style=discord.ButtonStyle.success)
     async def obfuscate_vip_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = interaction.user.id
         guild_id = interaction.guild.id
-        
+
         # ตรวจสอบจำนวนครั้งการกดปุ่ม VIP
         if not check_vip_limit(guild_id, user_id):
             await interaction.response.send_message("คุณสามารถแปลงโค้ด VIP ได้สูงสุด 100 ครั้งต่อวัน", ephemeral=True)
             return
-        
+
         await interaction.response.send_modal(ObfuscationVIPModal())
 
-    @discord.ui.button(label="จ้างทำบอท", style=discord.ButtonStyle.link, url="https://www.facebook.com/yourprofile")  # ระบุ URL ที่ถูกต้อง
+    @discord.ui.button(label="จ้างทำบอท", style=discord.ButtonStyle.link, url="https://www.facebook.com/yourprofile")
     async def hire_bot_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass  # การคลิกปุ่มจะเปิดลิงก์โดยอัตโนมัติ
+        # เมื่อกดปุ่มจะเปิดลิงก์โดยอัตโนมัติ
+        pass
 
     @discord.ui.button(label="ตรวจสอบจำนวนครั้ง", style=discord.ButtonStyle.secondary)
     async def check_usage_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = interaction.user.id
         guild_id = interaction.guild.id
-        
+
         log_file = f"logs/obf_{guild_id}.json"
         if os.path.exists(log_file):
             with open(log_file, "r") as file:
