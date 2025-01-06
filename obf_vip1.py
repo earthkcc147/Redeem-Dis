@@ -363,6 +363,7 @@ class ObfuscationView(discord.ui.View):
 
     @discord.ui.button(label="แปลง VIP (4000 ตัวอักษร)", style=discord.ButtonStyle.success)
     async def obfuscate_vip_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        load_data_balance(str(interaction.guild.id))  # จะทำให้โฟลเดอร์และไฟล์ถูกสร้างขึ้นถ้ายังไม่มี
         # เมื่อกดปุ่ม "แปลง VIP"
         await interaction.response.send_modal(ObfuscationVIPModal(interaction=interaction))
 
