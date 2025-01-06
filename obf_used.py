@@ -1,5 +1,5 @@
 #. OK จำนวน -1 ต่อครัง ฟรี10/วัน
-# รอเพอ่มปถ่มกดเติมเงิน
+# เพิ่มปุ่มกดเติมเงินแล้ว 10 บาท/1
 
 import discord
 from discord.ext import commands
