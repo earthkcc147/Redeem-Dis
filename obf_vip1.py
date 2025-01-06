@@ -265,7 +265,7 @@ class ObfuscationView(discord.ui.View):
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
-
+# Modal สำหรับการเข้ารหัสโค้ด Python
 class ObfuscationModal(discord.ui.Modal):
     def __init__(self, interaction: discord.Interaction):
         super().__init__(title="กรุณากรอกโค้ด Python")
@@ -280,10 +280,12 @@ class ObfuscationModal(discord.ui.Modal):
     async def on_submit(self, interaction: discord.Interaction):
         # ตรวจสอบจำนวนครั้งการใช้งาน
         if not check_user_limit(self.group_id, interaction.user.id):
-            await interaction.response.send_message(
-                "❌ คุณได้ใช้สิทธิ์การเข้ารหัสครบ 10 ครั้งในวันนี้แล้ว กรุณารอวันถัดไป",
-                ephemeral=True
+            embed = discord.Embed(
+                title="ข้อผิดพลาด",
+                description="❌ คุณได้ใช้สิทธิ์การเข้ารหัสครบ 10 ครั้งในวันนี้แล้ว กรุณารอวันถัดไป",
+                color=discord.Color.red()
             )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
         code = self.code_input.value
@@ -298,10 +300,19 @@ class ObfuscationModal(discord.ui.Modal):
         # บันทึกโค้ดในโฟลเดอร์ logs
         log_file = await save_log(log_filename, obfuscated_code)
 
-        # ส่งไฟล์ให้ผู้ใช้
+        # สร้าง embed สำหรับส่งข้อมูล
+        embed = discord.Embed(
+            title="โค้ดที่เข้ารหัสลับแล้ว",
+            description=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="ชื่อไฟล์", value=f"`{log_filename}`", inline=False)
+        embed.add_field(name="การเข้ารหัส", value="โค้ดได้ถูกเข้ารหัสลับเรียบร้อยแล้ว", inline=False)
+
+        # ส่งไฟล์พร้อม embed
         await interaction.response.send_message(
             file=discord.File(log_file),
-            content=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
+            embed=embed,
             ephemeral=True
         )
 
