@@ -79,7 +79,11 @@ def load_usage_data(group_id):
     if os.path.exists(file_path):
         with open(file_path, "r") as f:
             return json.load(f)
-    return {}
+    else:
+        # ถ้าไม่พบไฟล์ ให้สร้างไฟล์ใหม่พร้อมข้อมูลเริ่มต้น
+        usage_data = {}
+        save_usage_data(group_id, usage_data)
+        return usage_data
 
 # ฟังก์ชันสำหรับบันทึกข้อมูลจำนวนครั้งที่สามารถกดได้
 def save_usage_data(group_id, data):
