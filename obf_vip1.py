@@ -282,6 +282,7 @@ class ObfuscationVIPModal(discord.ui.Modal):
         await interaction.response.send_message(
             f"✅ ทำรายการสำเร็จ! ยอดเงินคงเหลือของคุณคือ {balance} บาท",
             ephemeral=True
+        )
 
 # เริ่มบอท
 bot.run('YOUR_DISCORD_BOT_TOKEN')
