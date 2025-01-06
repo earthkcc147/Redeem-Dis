@@ -95,6 +95,55 @@ async def on_ready():
         os.makedirs("logs")
     print("Bot พร้อมทำงานแล้ว")
 
+
+# ฟังก์ชันโหลดข้อมูลจากไฟล์ JSON โดยใช้ group_id เป็นชื่อไฟล์
+def load_data(group_id):
+    file_path = f"topup/{group_id}.json"
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as file:
+            return json.load(file)
+    return {}
+
+# ฟังก์ชันบันทึกข้อมูลลงไฟล์ JSON โดยใช้ group_id เป็นชื่อไฟล์
+def save_data(group_id, data):
+    file_path = f"topup/{group_id}.json"
+    with open(file_path, "w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
+
+# ฟังก์ชันอัปเดตยอดเงิน
+def update_balance(group_id, user_id, price, redeem_key):
+    data = load_data(group_id)
+
+    # ตรวจสอบว่า group_id มีข้อมูลในไฟล์หรือไม่
+    if str(user_id) not in data:
+        return False, 0  # หากไม่มีข้อมูล user_id คืนค่า balance เป็น 0
+
+    # ดึงยอดเงินปัจจุบันของ user_id
+    balance = data[str(user_id)].get("balance", 0)
+
+    if balance < price:
+        return False, balance  # หากยอดเงินไม่เพียงพอ
+
+    # หักเงินออกจาก balance
+    balance -= price
+    data[str(user_id)]["balance"] = balance
+
+    # เพิ่มประวัติการทำรายการ
+    if "history" not in data[str(user_id)]:
+        data[str(user_id)]["history"] = []
+    data[str(user_id)]["history"].append({
+        "amount": price,
+        "redeem_key": redeem_key,
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "success"
+    })
+
+    # บันทึกข้อมูลกลับลงไฟล์
+    save_data(group_id, data)
+
+    return True, balance
+
+
 async def save_log(filename, code):
     log_file = f"logs/{filename}.py"
     with open(log_file, "w") as file:
