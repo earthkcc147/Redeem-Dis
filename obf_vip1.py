@@ -13,6 +13,8 @@ import os
 from datetime import datetime
 import json
 
+
+
 USER_LIMIT_ENABLED = True  # เปิดใช้งานการจำกัดจำนวนครั้ง
 USER_LIMIT_PER_DAY = 10  # จำนวนครั้งต่อวัน
 
@@ -23,7 +25,9 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 
 
-
+import discord
+from discord.ui import Modal, TextInput
+import requests
 
 # ฟังก์ชันเพื่ออ่านข้อมูลจากไฟล์ JSON
 def load_data(group_id):
@@ -59,7 +63,8 @@ def save_data(data, group_id):
 
 
 
-class GiftLinkModal(Modal):
+
+class GiftLinkModal(discord.ui.Modal):
     def __init__(self, group_id):
         super().__init__(title="กรอกลิ้งซองของขวัญ")
         self.group_id = group_id
