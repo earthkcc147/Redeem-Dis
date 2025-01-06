@@ -135,6 +135,30 @@ def check_user_limit(guild_id, user_id):
 
     return True
 
+
+def get_user_usage_count(guild_id, user_id):
+    log_file = f"logs/obf_{guild_id}.json"
+
+    # อ่านข้อมูลจากไฟล์ JSON ถ้ามี
+    if os.path.exists(log_file):
+        with open(log_file, "r") as file:
+            data = json.load(file)
+    else:
+        data = {}
+
+    # หาก user_id ยังไม่มีในข้อมูลของ guild
+    if str(user_id) not in data:
+        return 0  # หากไม่มีข้อมูลการใช้งานของ user นี้
+
+    # หาวันที่ปัจจุบัน
+    today = datetime.today().strftime('%Y-%m-%d')
+
+    # หากวันนี้มีการใช้งานของ user นี้
+    if today in data[str(user_id)]:
+        return data[str(user_id)][today]
+    else:
+        return 0  # หากยังไม่ได้ใช้บริการในวันนี้
+
 @bot.event
 async def on_ready():
     if not os.path.exists("logs"):
