@@ -1,4 +1,4 @@
-#. OK จำนวน -1 ต่อครัง ฟรี1/วัน
+#. OK จำนวน -1 ต่อครัง ฟรี10/วัน
 
 import discord
 from discord.ext import commands
