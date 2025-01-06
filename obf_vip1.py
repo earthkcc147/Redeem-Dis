@@ -22,7 +22,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 def rename_code(code):
     pairs = {}
     used = set()
-    code = remove_docs(code)  # ลบ comment และ docstring
+    code = remove_docs(code)  # ลบ comment และ docstring ด้วยฟังก์ชันใหม่
     parsed = ast.parse(code)
 
     funcs = {node for node in ast.walk(parsed) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
@@ -56,11 +56,24 @@ def rename_code(code):
     return code
 
 def remove_docs(source):
-    out = ""
-    for line in source.splitlines():
-        if not line.strip().startswith("#"):
-            out += line + "\n"
-    return out
+    """
+    ลบ docstring และ comment ออกจากโค้ด Python
+    """
+    try:
+        # ใช้ ast เพื่อจัดการ docstring
+        parsed = ast.parse(source)
+        for node in ast.walk(parsed):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)):
+                node.body = [stmt for stmt in node.body if not isinstance(stmt, ast.Expr) or not isinstance(stmt.value, ast.Str)]
+        source = ast.unparse(parsed)  # แปลงกลับเป็น source code
+
+        # ลบ comment ด้วย regex
+        source = re.sub(r"#.*", "", source)  # ลบ comment ทั้งบรรทัดที่เริ่มต้นด้วย #
+        return source
+    except Exception as e:
+        print(f"เกิดข้อผิดพลาดในการลบ docstring: {e}")
+        return source
+
 
 def check_user_limit(guild_id, user_id):
     if not USER_LIMIT_ENABLED:
