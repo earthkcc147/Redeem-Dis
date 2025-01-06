@@ -127,7 +127,7 @@ def check_user_limit(guild_id, user_id):
             return False  # หากเกินจำนวนที่ตั้งไว้
     else:
         # หากไม่เคยใช้งานในวันนี้ให้เริ่มนับใหม่
-        data[str(user_id)][today] = 1
+        data[str(user_id)][today] = 0
 
     # บันทึกข้อมูลใหม่กลับลงไฟล์
     with open(log_file, "w") as file:
