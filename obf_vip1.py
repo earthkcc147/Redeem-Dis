@@ -6,6 +6,9 @@ import re
 import ast
 import os
 
+USER_LIMIT_ENABLED = True  # เปิดใช้งานการจำกัดจำนวนครั้ง
+USER_LIMIT_PER_DAY = 10  # จำนวนครั้งต่อวัน
+
 # สร้างบอท
 intents = discord.Intents.all()  # ใช้ all intents
 bot = commands.Bot(command_prefix='!', intents=intents)
