@@ -163,11 +163,13 @@ class ObfuscationView(discord.ui.View):
 
     @discord.ui.button(label="แปลง", style=discord.ButtonStyle.primary)
     async def obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(ObfuscationModal())
+        # เมื่อกดปุ่ม "แปลง"
+        await interaction.response.send_modal(ObfuscationModal(guild_id=interaction.guild.id))
 
     @discord.ui.button(label="แปลง VIP (4000 ตัวอักษร)", style=discord.ButtonStyle.success)
     async def obfuscate_vip_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(ObfuscationVIPModal())
+        # เมื่อกดปุ่ม "แปลง VIP"
+        await interaction.response.send_modal(ObfuscationVIPModal(interaction=interaction))
 
 
 class ObfuscationModal(discord.ui.Modal):
