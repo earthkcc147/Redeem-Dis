@@ -139,7 +139,6 @@ class ObfuscationView(discord.ui.View):
             await interaction.response.send_modal(ObfuscationModal(self.ctx, group_id, user_id))
         
 
-# ฟังก์ชันที่เรียกใช้เมื่อมีการกดปุ่มแปลงฟรี
 class ObfuscationFreeModal(discord.ui.Modal):
     def __init__(self, ctx):
         super().__init__(title="กรุณากรอกโค้ด Python")
@@ -149,12 +148,12 @@ class ObfuscationFreeModal(discord.ui.Modal):
     filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
 
     async def on_submit(self, interaction: discord.Interaction):
-        group_id = str(self.ctx.guild.id)
+        group_id = str(self.ctx.guild.id)  # แก้ไขที่นี่
         user_id = str(interaction.user.id)
         usage_data = load_usage_data(group_id)
 
         # ตรวจสอบการใช้งานในวันนี้
-        if can_use_today(usage_data, user_id):
+        if can_use_today(usage_data, user_id, group_id):  # ส่ง group_id ด้วยที่นี่
             # บันทึกวันที่ที่ใช้แปลงและลดจำนวนการใช้งาน
             usage_data[user_id]['count'] -= 1  # ลดจำนวนการใช้งาน
             save_usage_data(group_id, usage_data)
