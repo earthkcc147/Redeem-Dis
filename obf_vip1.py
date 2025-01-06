@@ -1,6 +1,7 @@
 # ระบบหักเงิน OK
 # เพิ่มระบบเติมเงิน
-# vip 10 บาทต่อครั้ง
+# vip เติม 10 บาทต่อครั้ง
+
 
 import discord
 from discord.ext import commands
