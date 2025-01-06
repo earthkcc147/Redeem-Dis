@@ -109,7 +109,7 @@ def can_use_today(usage_data, user_id, group_id, is_free=False):
         if usage_data[user_id]['free_count'] > 0:
             return True  # สามารถใช้งานแปลงฟรีได้
     else:
-        if usage_data[user_id]['normal_count'] >= 0:  # แปลงปกติไม่จำกัด
+        if usage_data[user_id]['normal_count'] > 0:  # แปลงปกติไม่จำกัด
             return True
 
     return False
