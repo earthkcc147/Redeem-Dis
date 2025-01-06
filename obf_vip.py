@@ -74,6 +74,8 @@ async def obf(ctx):
 class ObfuscationView(discord.ui.View):
     def __init__(self):
         super().__init__()
+        
+                self.add_item(discord.ui.Button(label="จ้างทำบอท", style=discord.ButtonStyle.link, url="https://www.facebook.com/yourprofile"))
 
     @discord.ui.button(label="แปลง", style=discord.ButtonStyle.primary)
     async def obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -83,9 +85,6 @@ class ObfuscationView(discord.ui.View):
     async def obfuscate_vip_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(ObfuscationVIPModal())
 
-    @discord.ui.button(label="จ้างทำบอท", style=discord.ButtonStyle.link, url="https://www.facebook.com/yourprofile")  # ปรับลิงก์เป็นลิงก์ Facebook ของคุณ
-    async def hire_bot_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass  # ปุ่มนี้จะทำงานโดยการเปิดลิงก์ Facebook ของคุณ
 
 class ObfuscationModal(discord.ui.Modal):
     def __init__(self):
