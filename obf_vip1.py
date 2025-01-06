@@ -217,6 +217,37 @@ class ObfuscationView(discord.ui.View):
         # เมื่อกดปุ่ม "แปลง VIP"
         await interaction.response.send_modal(ObfuscationVIPModal(interaction=interaction))
 
+    @discord.ui.button(label="ตรวจสอบจำนวนครั้ง", style=discord.ButtonStyle.secondary)
+    async def check_limit_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # ตรวจสอบจำนวนครั้งที่ใช้ไปแล้วในวันนี้
+        user_id = interaction.user.id
+        group_id = str(interaction.guild.id)
+
+        if not check_user_limit(group_id, user_id):
+            await interaction.response.send_message(
+                "❌ คุณได้ใช้สิทธิ์การเข้ารหัสครบ 10 ครั้งในวันนี้แล้ว กรุณารอวันถัดไป",
+                ephemeral=True
+            )
+        else:
+            # นับจำนวนครั้งที่ผู้ใช้ใช้ไปแล้วในวันนี้
+            log_file = f"logs/obf_{group_id}.json"
+            if os.path.exists(log_file):
+                with open(log_file, "r") as file:
+                    data = json.load(file)
+                    today = datetime.today().strftime('%Y-%m-%d')
+                    user_data = data.get(str(user_id), {})
+                    used_count = user_data.get(today, 0)
+
+                    await interaction.response.send_message(
+                        f"✅ คุณได้ใช้สิทธิ์การเข้ารหัสไปแล้ว {used_count} ครั้งในวันนี้.",
+                        ephemeral=True
+                    )
+            else:
+                await interaction.response.send_message(
+                    "✅ คุณยังไม่ได้ใช้สิทธิ์การเข้ารหัสในวันนี้.",
+                    ephemeral=True
+                )
+
 
 class ObfuscationModal(discord.ui.Modal):
     def __init__(self, interaction: discord.Interaction):
