@@ -103,24 +103,7 @@ class ObfuscationView(discord.ui.View):
 
     @discord.ui.button(label="แปลงฟรี", style=discord.ButtonStyle.green)
     async def free_obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        group_id = str(self.ctx.guild.id)
-        user_id = str(interaction.user.id)
-        usage_data = load_usage_data(group_id)
-
-        if can_use_today(usage_data, user_id):
-            # ทำการลดจำนวนการใช้งานครั้งแรก
-            if user_id not in usage_data:
-                usage_data[user_id] = {"count": 0, "last_used": ""}
-            usage_data[user_id]['last_used'] = datetime.today().strftime('%Y-%m-%d')
-
-            save_usage_data(group_id, usage_data)
-
-            await interaction.response.send_modal(ObfuscationModal())
-        else:
-            await interaction.response.send_message(
-                "คุณสามารถแปลงโค้ดได้เพียงครั้งเดียวต่อวันเท่านั้น กรุณาลองใหม่ในวันพรุ่งนี้",
-                ephemeral=True
-            )
+        await interaction.response.send_modal(ObfuscationFreeModal(self.ctx))
 
     @discord.ui.button(label="แปลง", style=discord.ButtonStyle.primary)
     async def obfuscate_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -142,6 +125,58 @@ class ObfuscationView(discord.ui.View):
                 "คุณไม่สามารถแปลงโค้ดได้แล้ว เนื่องจากคุณหมดจำนวนครั้งที่สามารถใช้งานได้",
                 ephemeral=True
             )
+
+class ObfuscationFreeModal(discord.ui.Modal):
+    def __init__(self, ctx):
+        super().__init__(title="กรุณากรอกโค้ด Python")
+        self.ctx = ctx
+
+    code_input = discord.ui.TextInput(label="โค้ด Python", style=discord.TextStyle.paragraph, placeholder="กรอกโค้ดที่ต้องการเข้ารหัส", required=True, max_length=2000)
+    filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        group_id = str(self.ctx.guild.id)
+        user_id = str(interaction.user.id)
+        usage_data = load_usage_data(group_id)
+
+        # ตรวจสอบการใช้งานในวันนี้
+        if can_use_today(usage_data, user_id):
+            # บันทึกวันที่ที่ใช้แปลงและลดจำนวนการใช้งาน
+            if user_id not in usage_data:
+                usage_data[user_id] = {"count": 0, "last_used": ""}
+            usage_data[user_id]['last_used'] = datetime.today().strftime('%Y-%m-%d')
+            save_usage_data(group_id, usage_data)
+
+            # ดำเนินการแปลงโค้ด
+            code = self.code_input.value
+            filename = self.filename_input.value
+
+            # เข้ารหัสโค้ด
+            obfuscated_code = rename_code(code)
+
+            # สร้างชื่อไฟล์ใน logs
+            log_filename = f"{filename}-obf"
+
+            # บันทึกโค้ดในโฟลเดอร์ logs
+            log_file = await save_log(log_filename, obfuscated_code)
+
+            # ส่งไฟล์ให้ผู้ใช้
+            await interaction.response.send_message(
+                file=discord.File(log_file),
+                content=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
+                ephemeral=True
+            )
+
+            # ลบไฟล์หลังส่ง
+            if os.path.exists(log_file):
+                os.remove(log_file)
+        else:
+            await interaction.response.send_message(
+                "คุณสามารถแปลงโค้ดได้เพียงครั้งเดียวต่อวันเท่านั้น กรุณาลองใหม่ในวันพรุ่งนี้",
+                ephemeral=True
+            )
+
+
 
 class ObfuscationModal(discord.ui.Modal):
     def __init__(self, ctx, group_id, user_id):
