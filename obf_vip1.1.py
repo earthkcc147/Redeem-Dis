@@ -149,9 +149,9 @@ class ObfuscationView(discord.ui.View):
         guild_id = interaction.guild.id
 
         # ตรวจสอบจำนวนครั้งการกดปุ่ม
-        if not check_user_limit(guild_id, user_id):
-            await interaction.response.send_message("คุณสามารถแปลงโค้ดได้สูงสุด 10 ครั้งต่อวัน", ephemeral=True)
-            return
+        # if not check_user_limit(guild_id, user_id):
+            # await interaction.response.send_message("คุณสามารถแปลงโค้ดได้สูงสุด 10 ครั้งต่อวัน", ephemeral=True)
+            # return
 
         await interaction.response.send_modal(ObfuscationModal())
 
@@ -161,9 +161,9 @@ class ObfuscationView(discord.ui.View):
         guild_id = interaction.guild.id
 
         # ตรวจสอบจำนวนครั้งการกดปุ่ม VIP
-        if not check_vip_limit(guild_id, user_id):
-            await interaction.response.send_message("คุณสามารถแปลงโค้ด VIP ได้สูงสุด 100 ครั้งต่อวัน", ephemeral=True)
-            return
+        # if not check_vip_limit(guild_id, user_id):
+            # await interaction.response.send_message("คุณสามารถแปลงโค้ด VIP ได้สูงสุด 100 ครั้งต่อวัน", ephemeral=True)
+            # return
 
         await interaction.response.send_modal(ObfuscationVIPModal())
 
