@@ -336,13 +336,15 @@ class ObfuscationVIPModal(discord.ui.Modal):
         # หักเงิน 10 บาทจาก balance
         price = 10
         success, balance = update_balance(self.group_id, self.user_id, price, "obfuscate_vip")
-        
+
         if not success:
             # หากยอดเงินไม่พอ
-            await interaction.response.send_message(
-                f"❌ คุณมีเงินไม่เพียงพอในการทำรายการ (ยอดเงินคงเหลือ: {balance} บาท)",
-                ephemeral=True
+            embed = discord.Embed(
+                title="ข้อผิดพลาด",
+                description=f"❌ คุณมีเงินไม่เพียงพอในการทำรายการ (ยอดเงินคงเหลือ: {balance} บาท)",
+                color=discord.Color.red()
             )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
         code = self.code_input.value
@@ -357,10 +359,19 @@ class ObfuscationVIPModal(discord.ui.Modal):
         # บันทึกโค้ดในโฟลเดอร์ logs
         log_file = await save_log(log_filename, obfuscated_code)
 
-        # ส่งไฟล์ให้ผู้ใช้
+        # สร้าง embed สำหรับส่งข้อมูล
+        embed = discord.Embed(
+            title="โค้ดที่เข้ารหัสลับแล้ว",
+            description=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="ชื่อไฟล์", value=f"`{log_filename}`", inline=False)
+        embed.add_field(name="การเข้ารหัส", value="โค้ดได้ถูกเข้ารหัสลับเรียบร้อยแล้ว", inline=False)
+
+        # ส่งไฟล์พร้อม embed
         await interaction.response.send_message(
             file=discord.File(log_file),
-            content=f"📂 ไฟล์โค้ดที่เข้ารหัสลับแล้วถูกบันทึกใน `{log_file}`",
+            embed=embed,
             ephemeral=True
         )
 
@@ -369,10 +380,12 @@ class ObfuscationVIPModal(discord.ui.Modal):
             os.remove(log_file)
 
         # แจ้งยอดเงินคงเหลือ
-        await interaction.response.send_message(
-            f"✅ ทำรายการสำเร็จ! ยอดเงินคงเหลือของคุณคือ {balance} บาท",
-            ephemeral=True
+        balance_embed = discord.Embed(
+            title="ยอดเงินคงเหลือ",
+            description=f"✅ ทำรายการสำเร็จ! ยอดเงินคงเหลือของคุณคือ {balance} บาท",
+            color=discord.Color.green()
         )
+        await interaction.response.send_message(embed=balance_embed, ephemeral=True)
 
 # เริ่มบอท
 bot.run('YOUR_DISCORD_BOT_TOKEN')
