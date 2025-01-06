@@ -144,8 +144,11 @@ class ObfuscationView(discord.ui.View):
             )
 
 class ObfuscationModal(discord.ui.Modal):
-    def __init__(self):
+    def __init__(self, ctx, group_id, user_id):
         super().__init__(title="กรุณากรอกโค้ด Python")
+        self.ctx = ctx
+        self.group_id = group_id
+        self.user_id = user_id
 
     code_input = discord.ui.TextInput(label="โค้ด Python", style=discord.TextStyle.paragraph, placeholder="กรอกโค้ดที่ต้องการเข้ารหัส", required=True, max_length=2000)
     filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
@@ -154,14 +157,20 @@ class ObfuscationModal(discord.ui.Modal):
         code = self.code_input.value
         filename = self.filename_input.value
 
-        # สร้างชื่อไฟล์ใน logs
-        log_filename = f"{filename}-obf"
-
         # เข้ารหัสโค้ด
         obfuscated_code = rename_code(code)
 
+        # สร้างชื่อไฟล์ใน logs
+        log_filename = f"{filename}-obf"
+        
         # บันทึกโค้ดในโฟลเดอร์ logs
         log_file = await save_log(log_filename, obfuscated_code)
+
+        # ลดจำนวนครั้งการใช้งานหลังการแปลง
+        usage_data = load_usage_data(self.group_id)
+        if self.user_id in usage_data:
+            usage_data[self.user_id]['count'] -= 1
+            save_usage_data(self.group_id, usage_data)
 
         # ส่งไฟล์ให้ผู้ใช้
         await interaction.response.send_message(
