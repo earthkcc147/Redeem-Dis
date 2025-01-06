@@ -57,6 +57,35 @@ def remove_docs(source):
             out += line + "\n"
     return out
 
+def check_user_limit(guild_id, user_id):
+    if not USER_LIMIT_ENABLED:
+        return True
+
+    log_file = f"logs/obf_{guild_id}.json"
+
+    if os.path.exists(log_file):
+        with open(log_file, "r") as file:
+            data = json.load(file)
+    else:
+        data = {}
+
+    if user_id not in data:
+        data[user_id] = {}
+
+    today = datetime.today().strftime('%Y-%m-%d')
+    if today in data[user_id]:
+        if data[user_id][today] < USER_LIMIT_PER_DAY:
+            data[user_id][today] += 1
+        else:
+            return False
+    else:
+        data[user_id][today] = 1
+
+    with open(log_file, "w") as file:
+        json.dump(data, file)
+
+    return True
+
 @bot.event
 async def on_ready():
     if not os.path.exists("logs"):
