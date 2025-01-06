@@ -220,24 +220,21 @@ class ObfuscationModal(discord.ui.Modal):
         if os.path.exists(log_file):
             os.remove(log_file)
 
-        # หากยังไม่มีข้อมูลการใช้งานให้สร้างข้อมูลในไฟล์
+        # อัปเดตข้อมูลการใช้งาน
         group_id = str(interaction.guild.id)
         user_id = str(interaction.user.id)
         usage_data = load_usage_data(group_id)
 
         if user_id not in usage_data:
-            # กรณีที่ยังไม่มีข้อมูลการใช้งาน เพิ่มจำนวนครั้งเป็น 1 และบันทึกวันที่
             usage_data[user_id] = {"count": 1, "last_used": datetime.today().strftime('%Y-%m-%d')}
         else:
-            # หากมีข้อมูลแล้ว ตรวจสอบว่าเป็นการใช้งานครั้งแรกของวันนี้
             if usage_data[user_id]['last_used'] != datetime.today().strftime('%Y-%m-%d'):
-                # เพิ่มจำนวนครั้งและอัปเดตวันที่
                 usage_data[user_id]['count'] = 1
                 usage_data[user_id]['last_used'] = datetime.today().strftime('%Y-%m-%d')
+            else:
+                usage_data[user_id]['count'] += 1
 
-        # บันทึกข้อมูลการใช้งานที่อัปเดตแล้ว
         save_usage_data(group_id, usage_data)
-
 
 class ObfuscationVIPModal(discord.ui.Modal):
     def __init__(self):
@@ -281,7 +278,21 @@ class ObfuscationVIPModal(discord.ui.Modal):
         if os.path.exists(log_file):
             os.remove(log_file)
 
+        # อัปเดตข้อมูลการใช้งาน
+        group_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+        usage_data = load_usage_data(group_id)
 
+        if user_id not in usage_data:
+            usage_data[user_id] = {"count": 1, "last_used": datetime.today().strftime('%Y-%m-%d')}
+        else:
+            if usage_data[user_id]['last_used'] != datetime.today().strftime('%Y-%m-%d'):
+                usage_data[user_id]['count'] = 1
+                usage_data[user_id]['last_used'] = datetime.today().strftime('%Y-%m-%d')
+            else:
+                usage_data[user_id]['count'] += 1
+
+        save_usage_data(group_id, usage_data)
 
 
 # เริ่มบอท
