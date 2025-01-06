@@ -211,14 +211,29 @@ class ObfuscationModal(discord.ui.Modal):
             os.remove(log_file)
 
 
+# Modal สำหรับการเข้ารหัสโค้ด Python (VIP)
 class ObfuscationVIPModal(discord.ui.Modal):
-    def __init__(self):
+    def __init__(self, group_id, user_id):
         super().__init__(title="กรุณากรอกโค้ด Python (VIP)")
+        self.group_id = group_id  # รับ group_id
+        self.user_id = user_id  # รับ user_id
 
     code_input = discord.ui.TextInput(label="โค้ด Python", style=discord.TextStyle.paragraph, placeholder="กรอกโค้ดที่ต้องการเข้ารหัส", required=True, max_length=4000)
     filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
 
     async def on_submit(self, interaction: discord.Interaction):
+        # หักเงิน 10 บาทจาก balance
+        price = 10
+        success, balance = update_balance(self.group_id, self.user_id, price, "obfuscate_vip")
+        
+        if not success:
+            # หากยอดเงินไม่พอ
+            await interaction.response.send_message(
+                f"❌ คุณมีเงินไม่เพียงพอในการทำรายการ (ยอดเงินคงเหลือ: {balance} บาท)",
+                ephemeral=True
+            )
+            return
+
         code = self.code_input.value
         filename = self.filename_input.value
 
