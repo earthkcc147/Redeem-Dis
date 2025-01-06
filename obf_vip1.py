@@ -278,6 +278,11 @@ class ObfuscationVIPModal(discord.ui.Modal):
         if os.path.exists(log_file):
             os.remove(log_file)
 
+        # แจ้งยอดเงินคงเหลือ
+        await interaction.followup.send(
+            f"✅ ทำรายการสำเร็จ! ยอดเงินคงเหลือของคุณคือ {balance} บาท",
+            ephemeral=True
+
 # เริ่มบอท
 bot.run('YOUR_DISCORD_BOT_TOKEN')
 
