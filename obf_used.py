@@ -128,7 +128,7 @@ class ObfuscationView(discord.ui.View):
 
         if user_id not in usage_data:
             usage_data[user_id] = {"count": 0, "last_used": ""}
-        
+
         if usage_data[user_id]['count'] > 0:
             # ลดจำนวนครั้งลง 1
             usage_data[user_id]['count'] -= 1
@@ -176,12 +176,10 @@ class ObfuscationModal(discord.ui.Modal):
         group_id = str(interaction.guild.id)
         user_id = str(interaction.user.id)
         usage_data = load_usage_data(group_id)
-        
+
         if user_id not in usage_data:
             usage_data[user_id] = {"count": 1, "last_used": datetime.today().strftime('%Y-%m-%d')}
             save_usage_data(group_id, usage_data)
-        
+
 # เริ่มบอท
 bot.run('YOUR_DISCORD_BOT_TOKEN')
-
-
