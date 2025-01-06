@@ -10,6 +10,9 @@ import os
 import json
 from datetime import datetime
 
+# กำหนดจำนวนครั้งที่สามารถแปลงฟรีได้ต่อวัน
+free_obfuscate_limit = 10
+
 # สร้างบอท
 intents = discord.Intents.all()  # ใช้ all intents
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -84,12 +87,23 @@ def save_usage_data(group_id, data):
     with open(file_path, "w") as f:
         json.dump(data, f, indent=4)
 
-# ฟังก์ชันสำหรับการตรวจสอบวันที่ที่ใช้แปลง
+
+# ฟังก์ชันสำหรับตรวจสอบการใช้งานในวันนี้และจำนวนครั้งที่เหลือ
 def can_use_today(usage_data, user_id):
     today = datetime.today().strftime('%Y-%m-%d')
-    if user_id not in usage_data or usage_data[user_id]['last_used'] != today:
-        return True
+    if user_id not in usage_data:
+        usage_data[user_id] = {"count": free_obfuscate_limit, "last_used": ""}
+    
+    if usage_data[user_id]['last_used'] != today:
+        # ถ้ายังไม่เคยใช้ในวันนี้ ให้รีเซ็ตจำนวนครั้ง
+        usage_data[user_id]['count'] = free_obfuscate_limit
+        usage_data[user_id]['last_used'] = today
+        save_usage_data(group_id, usage_data)
+
+    if usage_data[user_id]['count'] > 0:
+        return True  # สามารถใช้งานได้
     return False
+
 
 @bot.command()
 async def obf(ctx):
@@ -126,6 +140,8 @@ class ObfuscationView(discord.ui.View):
                 ephemeral=True
             )
 
+
+# ฟังก์ชันที่เรียกใช้เมื่อมีการกดปุ่มแปลงฟรี
 class ObfuscationFreeModal(discord.ui.Modal):
     def __init__(self, ctx):
         super().__init__(title="กรุณากรอกโค้ด Python")
@@ -142,9 +158,7 @@ class ObfuscationFreeModal(discord.ui.Modal):
         # ตรวจสอบการใช้งานในวันนี้
         if can_use_today(usage_data, user_id):
             # บันทึกวันที่ที่ใช้แปลงและลดจำนวนการใช้งาน
-            if user_id not in usage_data:
-                usage_data[user_id] = {"count": 0, "last_used": ""}
-            usage_data[user_id]['last_used'] = datetime.today().strftime('%Y-%m-%d')
+            usage_data[user_id]['count'] -= 1  # ลดจำนวนการใช้งาน
             save_usage_data(group_id, usage_data)
 
             # ดำเนินการแปลงโค้ด
@@ -172,7 +186,7 @@ class ObfuscationFreeModal(discord.ui.Modal):
                 os.remove(log_file)
         else:
             await interaction.response.send_message(
-                "คุณสามารถแปลงโค้ดได้เพียงครั้งเดียวต่อวันเท่านั้น กรุณาลองใหม่ในวันพรุ่งนี้",
+                f"คุณสามารถแปลงโค้ดได้เพียง {free_obfuscate_limit} ครั้งต่อวันเท่านั้น กรุณาลองใหม่ในวันพรุ่งนี้",
                 ephemeral=True
             )
 
