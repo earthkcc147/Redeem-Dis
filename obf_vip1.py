@@ -217,6 +217,7 @@ class ObfuscationVIPModal(discord.ui.Modal):
         super().__init__(title="กรุณากรอกโค้ด Python (VIP)")
         self.user_id = str(interaction.user.id)  # รับ user_id จาก interaction
         self.group_id = str(interaction.guild.id)  # รับ guild_id (ใช้เป็น group_id) จาก interaction
+        self.interaction = interaction
 
     code_input = discord.ui.TextInput(label="โค้ด Python", style=discord.TextStyle.paragraph, placeholder="กรอกโค้ดที่ต้องการเข้ารหัส", required=True, max_length=4000)
     filename_input = discord.ui.TextInput(label="ชื่อไฟล์", placeholder="กรุณากรอกชื่อไฟล์ (ไม่ต้องใส่นามสกุล)", required=True)
